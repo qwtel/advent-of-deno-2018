@@ -1,5 +1,18 @@
 const fs = require('fs').promises;
 
+const { pipe, some, reduce, map, frequencies, zip, skip } = require('./util.js');
+
+// NOTE: this wouldn't work with if `bs` is an iterator b/c it's called multiple times...
+function* combinations(as, bs) {
+    let i = 0;
+    for (const a of as) {
+        i++;
+        for (const b of skip(i)(bs)) {
+            yield [a, b];
+        }
+    }
+}
+
 (async () => {
     const ids = (await fs.readFile('2.txt', 'utf8')).trim().split('\n');
 
@@ -91,117 +104,3 @@ const fs = require('fs').promises;
         if (res.length === maxlen - 1) console.log(res.join(''))
     }
 })();
-
-function pipe(coll, ...fs) {
-    let res = coll;
-    for (const f of fs) {
-        res = f(res);
-    }
-    return res;
-}
-
-
-function some(p) {
-    return function (xs) {
-        for (const x of xs) {
-            if (p(x)) return true;
-        }
-        return false;
-    }
-}
-
-function reduce(f, init) {
-    return function (xs) {
-        let res = init;
-        for (const x of xs) {
-            res = f(res, x);
-        }
-        return res;
-    }
-}
-
-function map(f) {
-    return function* (xs) {
-        for (const x of xs) yield f(x);
-    }
-}
-
-// function* unzip(xs) {
-//     for (const [a, b] of xs) {
-//     }
-//     return [{
-//         next() {
-
-//         }
-//     }, {
-
-//     }]
-// }
-
-function frequencies(iterable) {
-    const fs = new Map();
-    for (const item of iterable) {
-        fs.set(item, 1 + (fs.get(item) || 0));
-    }
-    return fs;
-}
-
-
-function* zip(...xss) {
-    const iterables = xss.map(xs => xs[Symbol.iterator]());
-    while (true) {
-        const results = iterables.map(xs => xs.next());
-        if (results.some(r => r.done)) break;
-        yield results.map(r => r.value);
-    }
-}
-
-/*
-function* count() {
-    let i = 0;
-    while (true) {
-        yield i++;
-    }
-}
-
-function* enumerate(xs) {
-    let i = 0;
-    for (const x of xs) {
-        yield [i++, x];
-    }
-}
-*/
-
-function* skip(xs, n) {
-    let i = 0;
-    for (let x of xs) {
-        i++;
-        if (i <= n) continue;
-        yield x;
-    }
-}
-
-function* take(xs, n) {
-    let i = 0;
-    for (let x of xs) {
-        i++;
-        if (i > n) break;
-        yield x;
-    }
-}
-
-// function* partition(xs, n) {
-//     const [xs1, xs2] = tee(xs);
-//     return [take(xs1, n), skip(xs2, n)];
-// }
-
-// NOTE: this wouldn't work with if `bs` is an iterator b/c it's called multiple times...
-function* combinations(as, bs) {
-    let i = 0;
-    for (const a of as) {
-        i++;
-        for (const b of skip(bs, i)) {
-            yield [a, b];
-        }
-    }
-}

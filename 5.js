@@ -1,5 +1,7 @@
 const fs = require('fs').promises;
 
+const { pipe, map, reduce } = require('./util.js');
+
 (async () => {
     let input = 'dabAcCaCBAcCcaDA';
     input = (await fs.readFile('5.txt', 'utf8')).trim();
@@ -43,14 +45,14 @@ const fs = require('fs').promises;
     }
 
     const polymer = input.split('');
-    console.time('solve');
+    // console.time('solve');
     const res = solve(polymer);
-    console.timeEnd('solve');
+    // console.timeEnd('solve');
     console.log(res.length);
 
 
     // 2
-    console.time('solve2');
+    // console.time('solve2');
     const notLetter = letter => x => x !== letter && x.toLowerCase() !== letter;
     const letters = new Set(polymer.map(x => x.toLowerCase()));
     const solution = pipe(
@@ -60,45 +62,6 @@ const fs = require('fs').promises;
         map(x => x.length),
         reduce((a, b) => Math.min(a, b), polymer.length)
     );
-    console.timeEnd('solve2');
+    // console.timeEnd('solve2');
     console.log(solution);
 })();
-
-// function* pairwise(xs) {
-//     let prev;
-//     for (const x of xs) {
-//         if (prev) yield [prev, x];
-//         prev = x;
-//     }
-// }
-
-// function* enumerate(xs) {
-//     let i = 0;
-//     for (const x of xs) {
-//         yield [i++, x];
-//     }
-// }
-
-function pipe(coll, ...fs) {
-    let res = coll;
-    for (const f of fs) {
-        res = f(res);
-    }
-    return res;
-}
-
-function map(f) {
-    return function* (xs) {
-        for (const x of xs) yield f(x);
-    }
-}
-
-function reduce(f, init) {
-    return function (xs) {
-        let res = init;
-        for (const x of xs) {
-            res = f(res, x);
-        }
-        return res;
-    }
-}

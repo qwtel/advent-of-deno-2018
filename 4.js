@@ -1,5 +1,7 @@
 const fs = require('fs').promises;
 
+const { pipe, find, range, groupBy, mapValues, reduce } = require('./util.js');
+
 (async () => {
 //     const input = `
 // [1518-11-01 00:00] Guard #10 begins shift
@@ -124,70 +126,3 @@ const fs = require('fs').promises;
     // console.log(x);
     console.log(best.guard * best.maxMin);
 })();
-
-// function arrayCompare(as, bs) {
-//     const res = as[0] - bs[0];
-//     if (res === 0 && as.length > 1) {
-//         return arrayCompare(as.slice(1), bs.slice(1));
-//     } else {
-//         return res;
-//     }
-// }
-
-function find(p) {
-    return function (xs) {
-        for (const x of xs) {
-            if (p(x)) return x;
-        }
-        return null;
-    }
-}
-
-function* range(start = 0, end = Number.POSITIVE_INFINITY, step = 1) {
-    for (let i = start; i < end; i += step) {
-        yield i;
-    }
-}
-
-// function* entries(obj) {
-//     for (const key in obj) {
-//         yield [key, obj[key]];
-//     }
-// }
-
-function groupBy(f) {
-    return function (xs) {
-        const res = new Map();
-        for (const x of xs) {
-            const key = f(x);
-            if (!res.has(key)) res.set(key, []);
-            res.get(key).push(x);
-        }
-        return res;
-    }
-}
-
-
-function mapValues(f) {
-    return function* (xs) {
-        for (const [k, v] of xs) yield[k, f(v)];
-    }
-}
-
-function reduce(f, init) {
-    return function (xs) {
-        let res = init;
-        for (const x of xs) {
-            res = f(res, x);
-        }
-        return res;
-    }
-}
-
-function pipe(coll, ...fs) {
-    let res = coll;
-    for (const f of fs) {
-        res = f(res);
-    }
-    return res;
-}

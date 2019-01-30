@@ -1,5 +1,7 @@
-const fs = require('fs').promises;
+// const fs = require('fs').promises;
 const immutable = require('immutable');
+
+const { pipe, range, map, makeIncWrapped } = require('./util.js');
 
 (async () => {
     function solve(numPlayers, lastRound) {
@@ -109,55 +111,3 @@ const immutable = require('immutable');
     // console.log(Math.max(...solve2(428, 70825 * 100).values()));
 
 })();
-
-function* range(start = 0, end = Number.MAX_SAFE_INTEGER, step = 1) {
-    for (let i = start; i < end; i += step) {
-        yield i;
-    }
-}
-
-function pad(p, char = '0') {
-    return n => (new Array(p).fill(char).join('') + n).slice(-p);
-}
-
-function pipe(coll, ...fs) {
-    let res = coll;
-    for (const f of fs) {
-        res = f(res);
-    }
-    return res;
-}
-
-function map(f) {
-    return function* (xs) {
-        for (const x of xs) yield f(x);
-    }
-}
-
-function makeIncWrapped(maxX) {
-    return x => (++x) % maxX;
-}
-
-function* cycle(xs) {
-    const cache = [];
-    for (const x of xs) {
-        cache.push(x);
-        yield x;
-    }
-    const inc = makeIncWrapped(cache.length);
-    let i = 0;
-    while (true) {
-        yield cache[i];
-        i = inc(i);
-    }
-}
-
-function reduce(f, init) {
-    return function (xs) {
-        let res = init;
-        for (const x of xs) {
-            res = f(res, x);
-        }
-        return res;
-    }
-}

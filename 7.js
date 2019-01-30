@@ -1,5 +1,7 @@
 const fs = require('fs').promises;
 
+const { pipe, some, pluck, findAndRemove, range, map, partition, subtract, pad } = require('./util.js');
+
 (async () => {
     let input = `
 Step C must be finished before step A can begin.
@@ -34,7 +36,7 @@ Step F must be finished before step E can begin.
 
     const points = new Set(edges.reduce((a, x) => a.concat(x), []));
     const destin = new Set(pipe(edges, pluck(1)));
-    const startingPoints = deleteAll(points, destin);
+    const startingPoints = subtract(points, destin);
 
     {
         const queue = [...startingPoints].sort();
@@ -111,83 +113,3 @@ Step F must be finished before step E can begin.
         console.log(lastSec);
     }
 })();
-
-function deleteAll(A, B) {
-    const C = new Set(A);
-    for (const b of B) C.delete(b);
-    return C;
-}
-
-function pipe(coll, ...fs) {
-    let res = coll;
-    for (const f of fs) {
-        res = f(res);
-    }
-    return res;
-}
-
-function filter(p) {
-    return function* (xs) {
-        for (const x of xs) {
-            if (p(x)) yield x;
-        }
-    }
-}
-
-function some(p) {
-    return function (xs) {
-        for (const x of xs) {
-            if (p(x)) return true;
-        }
-        return false;
-    }
-}
-
-function every(p) {
-    return function (xs) {
-        for (const x of xs) {
-            if (!p(x)) return false;
-        }
-        return true;
-    }
-}
-
-function pluck(key) {
-    return function* (xs) {
-        for (const x of xs) {
-            yield x[key];
-        }
-    }
-}
-
-function findAndRemove(arr, f) {
-    const i = arr.findIndex(f);
-    return i === -1
-        ? null
-        : arr.splice(i, 1)[0];
-}
-
-function* range(start = 0, end = Number.MAX_SAFE_INTEGER, step = 1) {
-    for (let i = start; i < end; i += step) {
-        yield i;
-    }
-}
-
-function map(f) {
-    return function* (xs) {
-        for (const x of xs) yield f(x);
-    }
-}
-
-function partition(p) {
-    return function (xs) {
-        return [
-            filter(p)(xs),
-            filter(x => !p(x))(xs),
-        ];
-    }
-}
-
-function pad(p, char = '0') {
-    return n => (new Array(p).fill(char).join('') + n).slice(-p);
-}

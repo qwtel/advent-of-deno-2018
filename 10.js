@@ -1,5 +1,7 @@
 const fs = require('fs').promises;
 
+const { pipe, pluck, map2D, transpose } = require('./util.js');
+
 (async () => {
     let input = `
 position=< 9,  1> velocity=< 0,  2>
@@ -53,10 +55,7 @@ position=<-3,  6> velocity=< 2, -1>
     let data2 = data.map(({ position: [x, y], velocity }) => ({
         position: [x - minX, y - minY],
         velocity,
-    }))
-    const position2 = data2.map(x => x.position);
-    const maxX = Math.max(...pipe(position2, pluck(0))) + 2;
-    const maxY = Math.max(...pipe(position2, pluck(1))) + 2;
+    }));
 
     const timeout = t => new Promise(r => setTimeout(r, t));
 
@@ -94,27 +93,3 @@ position=<-3,  6> velocity=< 2, -1>
         } else if (hitTarget) break;
     }
 })();
-
-function pipe(coll, ...fs) {
-    let res = coll;
-    for (const f of fs) {
-        res = f(res);
-    }
-    return res;
-}
-
-function pluck(key) {
-    return function* (xs) {
-        for (const x of xs) {
-            yield x[key];
-        }
-    }
-}
-
-function map2D(arr2D, f) {
-    return arr2D.map(row => row.map(f));
-}
-
-function transpose(m) {
-    return m[0].map((_, i) => m.map(x => x[i]));
-}
