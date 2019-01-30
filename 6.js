@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 
-const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract } = require('./util.js');
+const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract, Array2D } = require('./util.js');
 
 (async () => {
     let input = `
@@ -20,7 +20,8 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract } = require('./
     // console.time('solve');
     const maxX = 1 + Math.max(...pipe(coords, pluck(0)));
     const maxY = 1 + Math.max(...pipe(coords, pluck(1)));
-    const field = new Array(maxX).fill(0).map(() => new Array(maxY).fill(0));
+    const field = new Array2D(maxX, maxY);
+    // const field = new Array(maxX).fill(0).map(() => new Array(maxY).fill(0));
     const bounds = [[0, 0], [maxX, maxY]];
 
     function makeOutOfBounds([[minX, minY], [maxX, maxY]]) {
@@ -29,7 +30,7 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract } = require('./
 
     const outOfBounds = makeOutOfBounds(bounds);
 
-    // yield all coordinates around point `(x, y)` of manhatten distance `d`
+    // yield all coordinates of manhatten distance `d` around point `(x, y)`
     function* manhatten(d, [x, y] = [0, 0]) {
         if (d !== 0) yield [x - d, y + 0];
         for (let i = -d + 1; i < d; i++) {
@@ -51,12 +52,12 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract } = require('./
 
         for (const [index, coord] of coords.entries()) {
             // get all points of manhatten distance `dist` from `coord`
-            for (const [cx, cy] of manhatten(dist, coord)) {
-                if (outOfBounds([cx, cy])) continue;
+            for (const p of manhatten(dist, coord)) {
+                if (outOfBounds(p)) continue;
 
-                const cell = field[cx][cy];
+                const cell = field.get(p);
                 if (!cell) {
-                    field[cx][cy] = { index, dist };
+                    field.set(p, { index, dist });
                     counter++;
                 } else if (cell.dist === dist) {
                     cell.index = -1;
@@ -66,7 +67,7 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract } = require('./
     }
     // console.timeEnd('solve');
 
-    const field2 = map2D(field, ({ index }) => index);
+    const field2 = field.map(({ index }) => index);
     // console.log(field2)
 
     // delivers all the edge coordinates in clockwise fashion
@@ -81,11 +82,11 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract } = require('./
     // we're not interested in letters that touch the edge of the field
     const excluded = new Set(pipe(
         edgeCoords([[0, 0], [maxX, maxY]]),
-        map(([x, y]) => field2[x][y])
+        map(p => field2.get(p))
     ));
     excluded.delete(-1);
 
-    const letters = new Set(walk2D(field2));
+    const letters = new Set(field2);
     letters.delete(-1);
 
     const included = subtract(letters, excluded);
@@ -94,7 +95,7 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract } = require('./
     // console.log(letters);
 
     const counts = new Map();
-    for (const letter of walk2D(field2)) {
+    for (const letter of field2) {
         if (included.has(letter)) {
             counts.set(letter, 1 + (counts.get(letter) || 0));
         }

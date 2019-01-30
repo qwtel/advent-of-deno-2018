@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 
-const { range, pluck, tee, pipe, every } = require('./util.js');
+const { range, pluck, tee, pipe, filter, length, every, Array2D } = require('./util.js');
 
 function* combinations(as, bs) {
     let bsb = bs, bsw;
@@ -35,27 +35,23 @@ function* combinations(as, bs) {
     const maxH = Math.max(...pipe(claims, pluck('h')));
     const dimX = maxX + maxW;
     const dimY = maxY + maxH;
-    const res = new Array(dimX).fill(0).map(() => new Array(dimY).fill(0));
+    const field = new Array2D(dimX, dimY);
 
     for (const { x, y, w, h } of claims) {
-        for (const xi of range(x, x + w)) {
-            for (const yi of range(y, y + h)) {
-                res[xi][yi] += 1;
-            }
+        const coords = combinations(range(x, x + w), range(y, y + h));
+        for (const p of coords) {
+            field.set(p, 1 + field.get(p));
         }
     }
 
-    const num = Array.prototype.concat(...res)
-        .filter(x => x > 1)
-        .length
-
+    const num = pipe(field, filter(x => x > 1), length());
     console.log(num);
 
     // part ii
 
     for (const { id, x, y, w, h } of claims) {
         const coords = combinations(range(x, x + w), range(y, y + h));
-        if (pipe(coords, every(([x, y]) => res[x][y] === 1))) {
+        if (pipe(coords, every(p => field.get(p) === 1))) {
             console.log(id);
             break;
         }
