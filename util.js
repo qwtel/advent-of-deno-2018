@@ -305,40 +305,10 @@ function* cycle(xs) {
     }
 }
 
-class Array2D {
-    constructor(maxX, maxY) {
-        this.array = new Array(maxX).fill(0).map(() => new Array(maxY).fill(0));
-    }
+// function makeOutOfBounds([[minX, minY], [maxX, maxY]]) {
+//     return ([x, y]) => x < minX || x >= maxX || y < minY || y >= maxY;
+// }
 
-    *[Symbol.iterator]() {
-        for (const row of this.array)
-            for (const cell of row)
-                yield cell;
-    }
-
-    forEach(f) {
-        for (const x of this) f(x);
-    }
-
-    map(f) {
-        const a = new Array2D();
-        a.array = this.array.map(row => row.map(f));
-        return a;
-    }
-
-    set([x, y], value) {
-        this.array[x][y] = value;
-        return this;
-    }
-
-    get([x, y]) {
-        return this.array[x][y];
-    }
-
-    get length() {
-        return this.array.length * this.array[0].length;
-    }
-}
 
 function length() {
     return function (xs) {
@@ -347,6 +317,8 @@ function length() {
         return c;
     }
 }
+
+const { Array2D } = require('./array2d.js');
 
 module.exports = {
     pipe,

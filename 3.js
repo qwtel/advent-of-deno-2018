@@ -35,7 +35,7 @@ function* combinations(as, bs) {
     const maxH = Math.max(...pipe(claims, pluck('h')));
     const dimX = maxX + maxW;
     const dimY = maxY + maxH;
-    const field = new Array2D(dimX, dimY);
+    const field = new Array2D([[0, 0], [dimX, dimY]]);
 
     for (const { x, y, w, h } of claims) {
         const coords = combinations(range(x, x + w), range(y, y + h));

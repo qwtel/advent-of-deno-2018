@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 
-const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract, Array2D } = require('./util.js');
+const { pipe, reduce, pluck, range, subtract, Array2D } = require('./util.js');
 
 (async () => {
     let input = `
@@ -20,15 +20,7 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract, Array2D } = re
     // console.time('solve');
     const maxX = 1 + Math.max(...pipe(coords, pluck(0)));
     const maxY = 1 + Math.max(...pipe(coords, pluck(1)));
-    const field = new Array2D(maxX, maxY);
-    // const field = new Array(maxX).fill(0).map(() => new Array(maxY).fill(0));
-    const bounds = [[0, 0], [maxX, maxY]];
-
-    function makeOutOfBounds([[minX, minY], [maxX, maxY]]) {
-        return ([x, y]) => x < minX || x >= maxX || y < minY || y >= maxY;
-    }
-
-    const outOfBounds = makeOutOfBounds(bounds);
+    const field = new Array2D([[0, 0], [maxX, maxY]]);
 
     // yield all coordinates of manhatten distance `d` around point `(x, y)`
     function* manhatten(d, [x, y] = [0, 0]) {
@@ -53,7 +45,7 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract, Array2D } = re
         for (const [index, coord] of coords.entries()) {
             // get all points of manhatten distance `dist` from `coord`
             for (const p of manhatten(dist, coord)) {
-                if (outOfBounds(p)) continue;
+                if (field.isOutside(p)) continue;
 
                 const cell = field.get(p);
                 if (!cell) {
@@ -70,25 +62,9 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract, Array2D } = re
     const field2 = field.map(({ index }) => index);
     // console.log(field2)
 
-    // delivers all the edge coordinates in clockwise fashion
-    // including min, excluding max
-    function* edgeCoords([[minX, minY], [maxX, maxY]]) {
-        for (let x = minX; x < maxX; x++) yield [x, minY];
-        for (let y = minY + 1; y < maxY; y++) yield [maxX - 1, y];
-        for (let x = maxX - 2; x >= minX; x--) yield [x, maxY - 1];
-        for (let y = maxY - 2; y >= minY + 1; y--) yield [minX, y];
-    }
-
     // we're not interested in letters that touch the edge of the field
-    const excluded = new Set(pipe(
-        edgeCoords([[0, 0], [maxX, maxY]]),
-        map(p => field2.get(p))
-    ));
-    excluded.delete(-1);
-
+    const excluded = new Set(field2.edgeValues());
     const letters = new Set(field2);
-    letters.delete(-1);
-
     const included = subtract(letters, excluded);
 
     // console.log(exclude);
@@ -106,16 +82,8 @@ const { pipe, map, reduce, pluck, range, walk2D, map2D, subtract, Array2D } = re
     // 2
     const manhattenDist = ([ax, ay], [bx, by]) => Math.abs(ax - bx) + Math.abs(ay - by);
 
-    // delivers all coordinates within bounds
-    // including min, excluding max
-    function* allCoords([[minX, minY], [maxX, maxY]]) {
-        for (let x = minX; x < maxX; x++) 
-            for (let y = minY; y < maxY; y++) 
-                yield [x, y];
-    }
-
     const region = [];
-    for (const [x, y] of allCoords(bounds)) {
+    for (const [x, y] of field2.coords()) {
         let total = 0;
         for (const coord of coords) {
             total += manhattenDist([x, y], coord)

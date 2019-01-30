@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 
-const { pipe, pluck, map2D, transpose } = require('./util.js');
+const { pipe, pluck, Array2D } = require('./util.js');
 
 (async () => {
     let input = `
@@ -41,49 +41,39 @@ position=<-3,  6> velocity=< 2, -1>
 
     const RE = /position=<(.*), (.*)> velocity=<(.*), (.*)>/;
 
-    const data = input.trim().split('\n')
+    let data = input.trim().split('\n')
         .map(line => RE.exec(line).slice(1).map(Number))
         .map(([a, b, c, d]) => ({
             position: [a, b],
             velocity: [c, d],
         }));
 
-    const position = data.map(x => x.position);
-    const minX = Math.min(...pipe(position, pluck(0)));
-    const minY = Math.min(...pipe(position, pluck(1)));
-
-    let data2 = data.map(({ position: [x, y], velocity }) => ({
-        position: [x - minX, y - minY],
-        velocity,
-    }));
-
     const timeout = t => new Promise(r => setTimeout(r, t));
 
     let hitTarget = false;
     for (let i = 0; ; i++) {
-        data2 = data2.map(({ position: [x, y], velocity: [dx, dy] }) => ({
+        data = data.map(({ position: [x, y], velocity: [dx, dy] }) => ({
             position: [x + dx, y + dy],
             velocity: [dx, dy],
         }));
 
-        const position2 = data2.map(x => x.position);
-        const minX = Math.min(...pipe(position2, pluck(0)));
-        const minY = Math.min(...pipe(position2, pluck(1)));
-        const maxX = Math.max(...pipe(position2, pluck(0)));
-        const maxY = Math.max(...pipe(position2, pluck(1)));
-
+        const position = data.map(x => x.position);
+        const minX = Math.min(...pipe(position, pluck(0)));
+        const minY = Math.min(...pipe(position, pluck(1)));
+        const maxX = Math.max(...pipe(position, pluck(0))) + 1;
+        const maxY = Math.max(...pipe(position, pluck(1))) + 1;
         const diffX = maxX - minX;
         const diffY = maxY - minY;
+
         if (diffX < 125 && diffY < 38) {
             hitTarget = true;
 
-            const field = new Array(diffX + 2).fill(0).map(() => new Array(diffY + 2).fill(0));
-            for (const { position: [x, y] } of data2) {
-                field[x - minX][y - minY] = true;
-            }
+            const field = new Array2D([[minX, minY], [maxX, maxY]]);
 
-            const fieldRepr = map2D(field, x => x ? '#' : '.');
-            for (const row of transpose(fieldRepr)) {
+            for (const { position } of data) field.set(position, true);
+
+            const fieldRepr = field.map(x => x ? '#' : '.').transpose();
+            for (const row of fieldRepr.rows()) {
                 console.log(row.join(''))
             }
             console.log(i + 1);
