@@ -1,43 +1,7 @@
-const fs = require('fs').promises;
-
-const { pipe, pluck, Array2D } = require('./util.js');
+const { streamToString, pipe, map, minMax, Array2D } = require('./util.js');
 
 (async () => {
-    let input = `
-position=< 9,  1> velocity=< 0,  2>
-position=< 7,  0> velocity=<-1,  0>
-position=< 3, -2> velocity=<-1,  1>
-position=< 6, 10> velocity=<-2, -1>
-position=< 2, -4> velocity=< 2,  2>
-position=<-6, 10> velocity=< 2, -2>
-position=< 1,  8> velocity=< 1, -1>
-position=< 1,  7> velocity=< 1,  0>
-position=<-3, 11> velocity=< 1, -2>
-position=< 7,  6> velocity=<-1, -1>
-position=<-2,  3> velocity=< 1,  0>
-position=<-4,  3> velocity=< 2,  0>
-position=<10, -3> velocity=<-1,  1>
-position=< 5, 11> velocity=< 1, -2>
-position=< 4,  7> velocity=< 0, -1>
-position=< 8, -2> velocity=< 0,  1>
-position=<15,  0> velocity=<-2,  0>
-position=< 1,  6> velocity=< 1,  0>
-position=< 8,  9> velocity=< 0, -1>
-position=< 3,  3> velocity=<-1,  1>
-position=< 0,  5> velocity=< 0, -1>
-position=<-2,  2> velocity=< 2,  0>
-position=< 5, -2> velocity=< 1,  2>
-position=< 1,  4> velocity=< 2,  1>
-position=<-2,  7> velocity=< 2, -2>
-position=< 3,  6> velocity=<-1, -1>
-position=< 5,  0> velocity=< 1,  0>
-position=<-6,  0> velocity=< 2,  0>
-position=< 5,  9> velocity=< 1, -2>
-position=<14,  7> velocity=<-2,  0>
-position=<-3,  6> velocity=< 2, -1>
-`;
-
-    input = await fs.readFile('10.txt', 'utf8');
+    const input = await streamToString(process.stdin);
 
     const RE = /position=<(.*), (.*)> velocity=<(.*), (.*)>/;
 
@@ -57,18 +21,13 @@ position=<-3,  6> velocity=< 2, -1>
             velocity: [dx, dy],
         }));
 
-        const position = data.map(x => x.position);
-        const minX = Math.min(...pipe(position, pluck(0)));
-        const minY = Math.min(...pipe(position, pluck(1)));
-        const maxX = Math.max(...pipe(position, pluck(0))) + 1;
-        const maxY = Math.max(...pipe(position, pluck(1))) + 1;
-        const diffX = maxX - minX;
-        const diffY = maxY - minY;
+        const [minX, maxX] = pipe(data, map(x => x.position[0]), minMax());
+        const [minY, maxY] = pipe(data, map(x => x.position[1]), minMax());
 
-        if (diffX < 125 && diffY < 38) {
+        if ((maxX - minX) < 125 && (maxY - minY) < 38) {
             hitTarget = true;
 
-            const field = new Array2D([[minX, minY], [maxX, maxY]]);
+            const field = new Array2D([[minX, minY], [maxX + 1, maxY + 1]]);
 
             for (const { position } of data) field.set(position, true);
 

@@ -1,24 +1,20 @@
 const fs = require('fs').promises;
 
-const { range, pluck, tee, pipe, filter, length, every, Array2D } = require('./util.js');
+const { streamToString, range, pluck, max, tee, pipe, filter, length, every, Array2D } = require('./util.js');
 
-function* combinations(as, bs) {
-    let bsb = bs, bsw;
+function* iproduct(as, bs) {
+    let bs1 = bs, bs2;
     for (const a of as) {
         // NOTE: need to work around the fact that iterators are only consumable once
-        [bsb, bsw] = tee(bsb);
-        for (const b of bsw) {
+        [bs1, bs2] = tee(bs1);
+        for (const b of bs2) {
             yield [a, b];
         }
     }
 }
 
 (async () => {
-    let input = `
-#1 @ 1,3: 4x4
-#2 @ 3,1: 4x4
-#3 @ 5,5: 2x2`;
-    input = await fs.readFile('3.txt', 'utf8');
+    const input = await streamToString(process.stdin);
 
     const PATTERN = /#(\d+)\ @\ (\d+),(\d+):\ (\d+)x(\d+)/;
 
@@ -29,16 +25,16 @@ function* combinations(as, bs) {
         .map(ex => ex.slice(1, 6).map(Number))
         .map(([id, x, y, w, h]) => ({ id, x, y, w, h }));
 
-    const maxX = Math.max(...pipe(claims, pluck('x')));
-    const maxY = Math.max(...pipe(claims, pluck('y')));
-    const maxW = Math.max(...pipe(claims, pluck('w')));
-    const maxH = Math.max(...pipe(claims, pluck('h')));
+    const maxX = pipe(claims, pluck('x'), max());
+    const maxY = pipe(claims, pluck('y'), max());
+    const maxW = pipe(claims, pluck('w'), max());
+    const maxH = pipe(claims, pluck('h'), max());
     const dimX = maxX + maxW;
     const dimY = maxY + maxH;
     const field = new Array2D([[0, 0], [dimX, dimY]]);
 
     for (const { x, y, w, h } of claims) {
-        const coords = combinations(range(x, x + w), range(y, y + h));
+        const coords = iproduct(range(x, x + w), range(y, y + h));
         for (const p of coords) {
             field.set(p, 1 + field.get(p));
         }
@@ -50,7 +46,7 @@ function* combinations(as, bs) {
     // part ii
 
     for (const { id, x, y, w, h } of claims) {
-        const coords = combinations(range(x, x + w), range(y, y + h));
+        const coords = iproduct(range(x, x + w), range(y, y + h));
         if (pipe(coords, every(p => field.get(p) === 1))) {
             console.log(id);
             break;

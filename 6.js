@@ -1,25 +1,15 @@
-const fs = require('fs').promises;
-
-const { pipe, reduce, pluck, range, subtract, Array2D } = require('./util.js');
+const { streamToString, pipe, pluck, max, range, subtract, Array2D } = require('./util.js');
 
 (async () => {
-    let input = `
-1, 1
-1, 6
-8, 3
-3, 4
-5, 5
-8, 9
-`;
-    input = (await fs.readFile('6.txt', 'utf8')).trim();
+    const input = (await streamToString(process.stdin)).trim();
     const MAX = 10000;
 
     const coords = input.trim().split('\n').map(s => s.split(', ').map(Number));
     // console.log(coords);
 
     // console.time('solve');
-    const maxX = 1 + Math.max(...pipe(coords, pluck(0)));
-    const maxY = 1 + Math.max(...pipe(coords, pluck(1)));
+    const maxX = 1 + pipe(coords, pluck(0), max());
+    const maxY = 1 + pipe(coords, pluck(1), max());
     const field = new Array2D([[0, 0], [maxX, maxY]]);
 
     // yield all coordinates of manhatten distance `d` around point `(x, y)`
@@ -39,8 +29,6 @@ const { pipe, reduce, pluck, range, subtract, Array2D } = require('./util.js');
     for (const dist of range()) {
         // break if no more empty cells within the field
         if (counter === size) break;
-        // if (!pipe(walk2D(field), some(x => x == 0))) break;
-        // if (!flatten(field).some(x => x == 0)) break;
 
         for (const [index, coord] of coords.entries()) {
             // get all points of manhatten distance `dist` from `coord`
@@ -60,15 +48,11 @@ const { pipe, reduce, pluck, range, subtract, Array2D } = require('./util.js');
     // console.timeEnd('solve');
 
     const field2 = field.map(({ index }) => index);
-    // console.log(field2)
 
     // we're not interested in letters that touch the edge of the field
     const excluded = new Set(field2.edgeValues());
     const letters = new Set(field2);
     const included = subtract(letters, excluded);
-
-    // console.log(exclude);
-    // console.log(letters);
 
     const counts = new Map();
     for (const letter of field2) {
@@ -76,7 +60,7 @@ const { pipe, reduce, pluck, range, subtract, Array2D } = require('./util.js');
             counts.set(letter, 1 + (counts.get(letter) || 0));
         }
     }
-    const res = pipe(counts.values(), reduce((a, b) => Math.max(a, b), 0));
+    const res = pipe(counts.values(), max(0));
     console.log(res);
 
     // 2

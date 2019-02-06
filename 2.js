@@ -1,20 +1,20 @@
-const fs = require('fs').promises;
-
-const { pipe, some, reduce, map, frequencies, zip, skip } = require('./util.js');
+const { streamToString, pipe, some, sum, map, frequencies, zip, skip, tee } = require('./util.js');
 
 // NOTE: this wouldn't work with if `bs` is an iterator b/c it's called multiple times...
 function* combinations(as, bs) {
-    let i = 0;
+    let bs1 = bs, bs2;
+    let i = 1;
     for (const a of as) {
-        i++;
-        for (const b of skip(i)(bs)) {
+        [bs1, bs2] = tee(bs1);
+        for (const b of skip(i)(bs2)) {
             yield [a, b];
         }
+        i++;
     }
 }
 
 (async () => {
-    const ids = (await fs.readFile('2.txt', 'utf8')).trim().split('\n');
+    const ids = (await streamToString(process.stdin)).trim().split('\n');
 
     // const twos = [], threes = [];
     // for (const id of ids) {
@@ -62,9 +62,6 @@ function* combinations(as, bs) {
     // const checksum = twos * threes;
     // console.log(checksum);
 
-    const bool2Num = x => x ? 1 : 0;
-    const add = (a, b) => a + b;
-
     // Version without pipe:
 
     // const twos = map(id => some(x => x === 2)(frequencies(id).values()))(ids);
@@ -73,18 +70,20 @@ function* combinations(as, bs) {
     // const numThrees = reduce(add, 0)(map(bool2Num)(threes));
     // const checksum = numTwos * numThrees;
 
-    const twos = pipe(ids,
+    const twos = pipe(
+        ids,
         map(id => frequencies(id)),
         map(freq => pipe(freq.values(), some(x => x === 2))),
-        map(bool2Num),
-        reduce(add, 0)
+        map(x => x ? 1 : 0),
+        sum(0),
     );
 
-    const threes = pipe(ids,
+    const threes = pipe(
+        ids,
         map(id => frequencies(id)),
         map(freq => pipe(freq.values(), some(x => x === 3))),
-        map(bool2Num),
-        reduce(add, 0)
+        map(x => x ? 1 : 0),
+        sum(0),
     );
 
     const checksum = twos * threes;
@@ -101,6 +100,9 @@ function* combinations(as, bs) {
         for (const [l1, l2] of zip(fst, snd)) {
             if (l1 === l2) res.push(l1);
         }
-        if (res.length === maxlen - 1) console.log(res.join(''))
+        if (res.length === maxlen - 1) {
+            console.log(res.join(''))
+            break;
+        }
     }
 })();

@@ -1,9 +1,7 @@
-const fs = require('fs').promises;
+const { streamToString } = require('./util.js');
 
 (async () => {
-    // let input = `2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2`;
-
-    input = (await fs.readFile('8.txt', 'utf8')).trim();
+    const input = (await streamToString(process.stdin)).trim();
 
     const treeInput = input.split(' ').map(Number);
 

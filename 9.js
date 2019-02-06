@@ -1,21 +1,21 @@
-// const fs = require('fs').promises;
-const immutable = require('immutable');
-
-const { pipe, range, map, makeIncWrapped } = require('./util.js');
+const { pipe, range, map, fillGaps } = require('./util.js');
 
 (async () => {
+    const [NUM_PLAYERS, LAST_ROUND] = pipe(
+        range(2, 4),
+        map(i => process.argv[i]),
+        map(Number),
+        fillGaps([428, 70825], [NaN])
+    );
+
     function solve(numPlayers, lastRound) {
         const circle = [0];
         const scores = new Map(pipe(range(0, numPlayers), map(x => [x, 0])));
         let c = 0;
         let p = 0;
 
-        const incPlayer = makeIncWrapped(numPlayers);
-
         for (const turn of range(1, lastRound + 1)) {
             // if (turn % 10000 == 0) console.log(turn);
-
-            p = incPlayer(p);
 
             if (turn % 23 === 0) {
                 let ri = c - 7;
@@ -36,11 +36,15 @@ const { pipe, range, map, makeIncWrapped } = require('./util.js');
             //     .map((x, i) => c === i ? `(${x})` : `${x} `)
             //     .map(x => pad(4, ' ')(x)).join('')
             // );
+
+            p = (p + 1) % numPlayers;
         }
         return scores;
     }
 
     // sloooooow
+    const immutable = require('immutable');
+
     function solveImmutable(numPlayers, lastRound) {
         const incPlayer = makeIncWrapped(numPlayers);
 
@@ -97,17 +101,6 @@ const { pipe, range, map, makeIncWrapped } = require('./util.js');
         ).scores;
     }
 
-    // console.log(Math.max(...solveImmutable(9, 25).values()));
-
-    // console.log(Math.max(...solveImmutable(10, 1618).values()));
-    // console.log(Math.max(...solveImmutable(13, 7999).values()));
-    // console.log(Math.max(...solveImmutable(17, 1104).values()));
-    // console.log(Math.max(...solveImmutable(21, 6111).values()));
-    // console.log(Math.max(...solveImmutable(30, 5807).values()));
-
-    console.log(Math.max(...solve(428, 70825).values()));
-    // console.log(Math.max(...solveImmutable(428, 70825).values()));
-
-    // console.log(Math.max(...solve2(428, 70825 * 100).values()));
+    console.log(Math.max(...solve(NUM_PLAYERS, LAST_ROUND).values()));
 
 })();

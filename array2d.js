@@ -35,7 +35,7 @@ class Array2D {
     map(f) {
         const a = new Array2D();
         a._array = this._array.map(row => row.map(f));
-        a._bounds = this._bounds.map(x => [...x]);
+        a._bounds = this._bounds.map(([x, y]) => [x, y]);
         return a;
     }
 

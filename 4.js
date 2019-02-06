@@ -1,28 +1,7 @@
-const fs = require('fs').promises;
-
-const { pipe, find, range, groupBy, mapValues, reduce } = require('./util.js');
+const { streamToString, pipe, find, range, groupBy, mapValues, reduce } = require('./util.js');
 
 (async () => {
-//     const input = `
-// [1518-11-01 00:00] Guard #10 begins shift
-// [1518-11-01 00:05] falls asleep
-// [1518-11-01 00:25] wakes up
-// [1518-11-01 00:30] falls asleep
-// [1518-11-01 00:55] wakes up
-// [1518-11-01 23:58] Guard #99 begins shift
-// [1518-11-02 00:40] falls asleep
-// [1518-11-02 00:50] wakes up
-// [1518-11-03 00:05] Guard #10 begins shift
-// [1518-11-03 00:24] falls asleep
-// [1518-11-03 00:29] wakes up
-// [1518-11-04 00:02] Guard #99 begins shift
-// [1518-11-04 00:36] falls asleep
-// [1518-11-04 00:46] wakes up
-// [1518-11-05 00:03] Guard #99 begins shift
-// [1518-11-05 00:45] falls asleep
-// [1518-11-05 00:55] wakes up
-//         `;
-    const input = await fs.readFile('4.txt', 'utf8');
+    const input = await streamToString(process.stdin);
 
     const RE_DATE = /\[(.+)-(.+)-(.+)\ (.+):(.+)\]/;
     const RE_BEGINS = /Guard\ #(\d+) begins shift/;
@@ -52,8 +31,7 @@ const { pipe, find, range, groupBy, mapValues, reduce } = require('./util.js');
         .map(([dateStr, str]) => ({
             date: getDate(dateStr),
             ...getType(str)
-        }))
-        // .sort((a, b) => arrayCompare(a.date, b.date));
+        }));
 
     const timeTable = new Map();
     let curr, start;

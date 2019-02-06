@@ -6,8 +6,6 @@ function pipe(coll, ...fs) {
     return res;
 }
 
-
-
 function some(p) {
     return function (xs) {
         for (const x of xs) {
@@ -39,6 +37,15 @@ function reduce(f, init) {
 function map(f) {
     return function* (xs) {
         for (const x of xs) yield f(x);
+    }
+}
+
+function tap(f) {
+    return function* (xs) {
+        for (const x of xs) {
+            f(x);
+            yield x;
+        }
     }
 }
 
@@ -81,6 +88,14 @@ function* zip(...xss) {
     }
 }
 
+function* zipOuter(...xss) {
+    const iterables = xss.map(xs => xs[Symbol.iterator]());
+    while (true) {
+        const results = iterables.map(xs => xs.next());
+        if (results.every(r => r.done)) break;
+        yield results.map(r => r.value);
+    }
+}
 
 // function* unzip(xs) {
 //     for (const [a, b] of xs) {
@@ -320,17 +335,97 @@ function length() {
 
 const { Array2D } = require('./array2d.js');
 
+function min(absMax = Number.POSITIVE_INFINITY, cf = (a, b) => a - b) {
+    return function (xs) {
+        let min = absMax;
+        for (const x of xs) {
+            if (cf(x, min) < 0) min = x;
+        }
+        return min;
+    }
+}
+
+function max(absMin = Number.NEGATIVE_INFINITY, cf = (a, b) => a - b) {
+    return function (xs) {
+        let max = absMin;
+        for (const x of xs) {
+            if (cf(x, max) > 0) max = x;
+        }
+        return max;
+    }
+}
+
+function minMax([absMax, absMin] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY], cf = (a, b) => a - b) {
+    return function (xs) {
+        let min = absMax;
+        let max = absMin;
+        for (const x of xs) {
+            if (cf(x, min) < 0) min = x;
+            if (cf(x, max) > 0) max = x;
+        }
+        return [min, max];
+    }
+}
+
+function sum(zero = 0, add = (a, b) => a + b) {
+    return function(xs) {
+        let res = zero;
+        for (const x of xs) {
+            res = add(res, x);
+        }
+        return res;
+    }
+}
+
+// function asyncReduce(f, init) {
+//     return async function (xs) {
+//         let res = init;
+//         for await (const x of xs) {
+//             res = f(res, x);
+//         }
+//         return res;
+//     }
+// }
+
+// function asyncTap(f) {
+//     return async function* (xs) {
+//         for await (const x of xs) {
+//             f(x);
+//             yield x;
+//         }
+//     }
+// }
+
+async function streamToString(stream) {
+    let buffer = Buffer.alloc(0);
+    for await (const chunk of stream) {
+        buffer = Buffer.concat([buffer, chunk]);
+    }
+    return buffer.toString('utf8');
+}
+
+function fillGaps(vs, gapValues = [undefined]) {
+    return function*(xs) {
+        for (const [x, v] of zip(xs, vs)) {
+            if (!gapValues.includes(x)) yield x;
+            else yield v;
+        }
+    }
+}
+
 module.exports = {
     pipe,
     some,
     every,
     reduce,
     map,
+    tap,
     filter,
     partition,
     frequencies,
     concat,
     zip,
+    zipOuter,
     skip,
     take,
     tee,
@@ -356,4 +451,10 @@ module.exports = {
     cycle,
     Array2D,
     length,
+    min,
+    max,
+    minMax,
+    sum,
+    streamToString,
+    fillGaps,
 };

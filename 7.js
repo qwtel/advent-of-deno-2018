@@ -1,23 +1,14 @@
-const fs = require('fs').promises;
-
-const { pipe, some, pluck, findAndRemove, range, map, partition, subtract, pad } = require('./util.js');
+const { streamToString, pipe, some, pluck, flatten, findAndRemove, range, map, fillGaps, partition, subtract, pad } = require('./util.js');
 
 (async () => {
-    let input = `
-Step C must be finished before step A can begin.
-Step C must be finished before step F can begin.
-Step A must be finished before step B can begin.
-Step A must be finished before step D can begin.
-Step B must be finished before step E can begin.
-Step D must be finished before step E can begin.
-Step F must be finished before step E can begin.
-`;
-    let BASE_DURATION = 0;
-    let NUM_WORKERS = 2;
+    const [BASE_DURATION, NUM_WORKERS] = pipe(
+        range(2, 4),
+        map(i => process.argv[i]),
+        map(Number),
+        fillGaps([60, 5], [NaN])
+    );
 
-    input = (await fs.readFile('7.txt', 'utf8')).trim();
-    BASE_DURATION = 60;
-    NUM_WORKERS = 5;
+    const input = (await streamToString(process.stdin)).trim();
 
     const RE = /Step (\w) must be finished before step (\w) can begin./;
 
@@ -31,18 +22,16 @@ Step F must be finished before step E can begin.
         deps.set(b, (deps.get(b) || []).concat(a).sort());
     }
 
-    // console.log(dirs);
-    // console.log(deps);
-
-    const points = new Set(edges.reduce((a, x) => a.concat(x), []));
-    const destin = new Set(pipe(edges, pluck(1)));
-    const startingPoints = subtract(points, destin);
+    const points = new Set(flatten(edges));
+    const destinations = pipe(edges, pluck(1));
+    const startingPoints = subtract(points, destinations);
 
     {
         const queue = [...startingPoints].sort();
         const order = [];
 
         const depsComplete = task => (deps.get(task) || []).every(d => order.includes(d));
+        const taskInSystem = task => queue.includes(task) || order.includes(task);
 
         while (queue.length) {
             // Find the first element in the queue that has all it's dependencies satisfied
@@ -52,11 +41,8 @@ Step F must be finished before step E can begin.
 
             // Add next potential steps to the queue, 
             // unless they're already in the queue or completed.
-            const next = (dirs.get(curr) || []).filter(n =>
-                !queue.includes(n) && !order.includes(n)
-            );
+            const next = (dirs.get(curr) || []).filter(n => !taskInSystem(n));
             for (const n of next) queue.push(n);
-
             queue.sort();
         }
 
@@ -73,8 +59,10 @@ Step F must be finished before step E can begin.
         ));
 
         const depsComplete = task => (deps.get(task) || []).every(d => order.includes(d));
+        const taskInSystem = task => queue.includes(task) || order.includes(task);
         const isInProgress = task => pipe(workers.values(), some(({ task: t }) => task === t));
-        const taskDuration = task => BASE_DURATION + task.charCodeAt(0) - 64;
+
+        const getDuration = task => BASE_DURATION + task.charCodeAt(0) - 64;
 
         let lastSec;
         for (const sec of range()) {
@@ -82,10 +70,9 @@ Step F must be finished before step E can begin.
 
             for (const [n] of available) {
                 const task = findAndRemove(queue, t => depsComplete(t));
-                if (!task) continue;
+                if (!task) break;
 
-                const duration = taskDuration(task);
-                workers.set(n, { task, duration })
+                workers.set(n, { task, duration: getDuration(task) })
             }
 
             // console.log(`${pad(3)(sec)}: ${[...workers].map(([, { task }]) => task || '.').join(' ')}   ${order.join('')}`);
@@ -101,9 +88,8 @@ Step F must be finished before step E can begin.
 
                     order.push(state.task);
 
-                    const next = (dirs.get(state.task) || []).filter(n =>
-                        !queue.includes(n) && !order.includes(n) && !isInProgress(n)
-                    );
+                    const next = (dirs.get(state.task) || [])
+                        .filter(n => !taskInSystem(n) && !isInProgress(n));
                     for (const n of next) queue.push(n);
                 }
             }

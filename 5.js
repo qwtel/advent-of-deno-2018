@@ -1,10 +1,7 @@
-const fs = require('fs').promises;
-
-const { pipe, map, reduce } = require('./util.js');
+const { streamToString, pipe, map, min } = require('./util.js');
 
 (async () => {
-    let input = 'dabAcCaCBAcCcaDA';
-    input = (await fs.readFile('5.txt', 'utf8')).trim();
+    const input = (await streamToString(process.stdin)).trim();
 
     function isReacting(x, y) {
         return Math.abs(x.charCodeAt(0) - y.charCodeAt(0)) === 32
@@ -60,7 +57,7 @@ const { pipe, map, reduce } = require('./util.js');
         map(l => polymer.filter(notLetter(l))),
         map(solve),
         map(x => x.length),
-        reduce((a, b) => Math.min(a, b), polymer.length)
+        min(polymer.length)
     );
     // console.timeEnd('solve2');
     console.log(solution);
