@@ -1,8 +1,12 @@
-const { streamToString, pipe, some, pluck, flatten, findAndRemove, range, map, fillGaps, partition, subtract, pad } = require('./util.js');
+#!/usr/bin/env node --experimental-modules
+
+import { streamToString, pipe, some, pluck, flatten, findAndRemove, range, map, fillGaps, partition, subtract, } from './util.mjs';
 
 (async () => {
+    const dIndex = process.argv.findIndex(x => x === '-d');
+    const wIndex = process.argv.findIndex(x => x === '-w');
     const [BASE_DURATION, NUM_WORKERS] = pipe(
-        range(2, 4),
+        [dIndex + 1, wIndex + 1],
         map(i => process.argv[i]),
         map(Number),
         fillGaps([60, 5], [NaN])

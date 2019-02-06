@@ -1,4 +1,6 @@
-const { streamToString } = require('./util.js');
+#!/usr/bin/env node --experimental-modules
+
+import { streamToString } from './util.mjs';
 
 (async () => {
     const input = (await streamToString(process.stdin)).trim();

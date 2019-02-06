@@ -1,4 +1,8 @@
-function pipe(coll, ...fs) {
+import { Array2D } from './array2d.mjs';
+
+export { Array2D };
+
+export function pipe(coll, ...fs) {
     let res = coll;
     for (const f of fs) {
         res = f(res);
@@ -6,7 +10,7 @@ function pipe(coll, ...fs) {
     return res;
 }
 
-function some(p) {
+export function some(p) {
     return function (xs) {
         for (const x of xs) {
             if (p(x)) return true;
@@ -15,7 +19,7 @@ function some(p) {
     }
 }
 
-function every(p) {
+export function every(p) {
     return function (xs) {
         for (const x of xs) {
             if (!p(x)) return false;
@@ -24,7 +28,7 @@ function every(p) {
     }
 }
 
-function reduce(f, init) {
+export function reduce(f, init) {
     return function (xs) {
         let res = init;
         for (const x of xs) {
@@ -34,13 +38,23 @@ function reduce(f, init) {
     }
 }
 
-function map(f) {
+export function reductions(f, init) {
+    return function* (xs) {
+        let res = init;
+        for (const x of xs) {
+            res = f(res, x);
+            yield res;
+        }
+    }
+}
+
+export function map(f) {
     return function* (xs) {
         for (const x of xs) yield f(x);
     }
 }
 
-function tap(f) {
+export function tap(f) {
     return function* (xs) {
         for (const x of xs) {
             f(x);
@@ -49,7 +63,7 @@ function tap(f) {
     }
 }
 
-function filter(p) {
+export function filter(p) {
     return function* (xs) {
         for (const x of xs) {
             if (p(x)) yield x;
@@ -57,7 +71,7 @@ function filter(p) {
     }
 }
 
-function partition(p) {
+export function partition(p) {
     return function (xs) {
         return [
             filter(p)(xs),
@@ -66,7 +80,7 @@ function partition(p) {
     }
 }
 
-function frequencies(iterable) {
+export function frequencies(iterable) {
     const fs = new Map();
     for (const item of iterable) {
         fs.set(item, 1 + (fs.get(item) || 0));
@@ -74,12 +88,12 @@ function frequencies(iterable) {
     return fs;
 }
 
-function* concat(...xss) {
+export function* concat(...xss) {
     for (xs of xss)
         for (const x of xs) yield x;
 }
 
-function* zip(...xss) {
+export function* zip(...xss) {
     const iterables = xss.map(xs => xs[Symbol.iterator]());
     while (true) {
         const results = iterables.map(xs => xs.next());
@@ -88,7 +102,7 @@ function* zip(...xss) {
     }
 }
 
-function* zipOuter(...xss) {
+export function* zipOuter(...xss) {
     const iterables = xss.map(xs => xs[Symbol.iterator]());
     while (true) {
         const results = iterables.map(xs => xs.next());
@@ -97,7 +111,7 @@ function* zipOuter(...xss) {
     }
 }
 
-// function* unzip(xs) {
+// export function* unzip(xs) {
 //     for (const [a, b] of xs) {
 //     }
 //     return [{
@@ -109,7 +123,7 @@ function* zipOuter(...xss) {
 //     }]
 // }
 
-function skip(n) {
+export function skip(n) {
     return function* (xs) {
         let i = 0;
         for (let x of xs) {
@@ -120,7 +134,7 @@ function skip(n) {
     }
 }
 
-function take(n) {
+export function take(n) {
     return function* (xs) {
         let i = 0;
         for (let x of xs) {
@@ -132,14 +146,14 @@ function take(n) {
 }
 
 /*
-function* count() {
+export function* count() {
     let i = 0;
     while (true) {
         yield i++;
     }
 }
 
-function* enumerate(xs) {
+export function* enumerate(xs) {
     let i = 0;
     for (const x of xs) {
         yield [i++, x];
@@ -147,19 +161,19 @@ function* enumerate(xs) {
 }
 */
 
-// function* partition(xs, n) {
+// export function* partition(xs, n) {
 //     const [xs1, xs2] = tee(xs);
 //     return [take(xs1, n), skip(xs2, n)];
 // }
 
 // https://stackoverflow.com/a/46416353/870615
-function tee(iterable) {
+export function tee(iterable) {
     const source = iterable[Symbol.iterator]();
     const buffers = [[], []];
     const DONE = Symbol('done');
 
     const next = i => {
-        if (buffers[i].length !== 0) return buffers[i].shift();
+        if (buffers[i].length) return buffers[i].shift();
         const x = source.next();
         if (x.done) return DONE;
         buffers[1 - i].push(x.value);
@@ -175,7 +189,32 @@ function tee(iterable) {
     });
 }
 
-function pluck(key) {
+// TODO: generalize to n parameters
+export function* iproduct(as, bs) {
+    let bs1 = bs, bs2;
+    for (const a of as) {
+        // TODO: only tee when bs is an iterator!?
+        [bs1, bs2] = tee(bs1);
+        for (const b of bs2) {
+            yield [a, b];
+        }
+    }
+}
+
+// TODO: generalize to n parameters
+export function* combinations(as, bs) {
+    let bs1 = bs, bs2;
+    let i = 1;
+    for (const a of as) {
+        // TODO: only tee when bs is an iterator!?
+        [bs1, bs2] = tee(bs1);
+        for (const b of skip(i++)(bs2)) {
+            yield [a, b];
+        }
+    }
+}
+
+export function pluck(key) {
     return function* (xs) {
         for (const x of xs) {
             yield x[key];
@@ -183,13 +222,13 @@ function pluck(key) {
     }
 }
 
-function* range(start = 0, end = Number.MAX_SAFE_INTEGER, step = 1) {
+export function* range(start = 0, end = Number.MAX_SAFE_INTEGER, step = 1) {
     for (let i = start; i < end; i += step) {
         yield i;
     }
 }
 
-function groupBy(f) {
+export function groupBy(f) {
     return function (xs) {
         const res = new Map();
         for (const x of xs) {
@@ -201,13 +240,13 @@ function groupBy(f) {
     }
 }
 
-function mapValues(f) {
+export function mapValues(f) {
     return function* (xs) {
         for (const [k, v] of xs) yield [k, f(v)];
     }
 }
 
-function find(p) {
+export function find(p) {
     return function (xs) {
         for (const x of xs) {
             if (p(x)) return x;
@@ -217,7 +256,7 @@ function find(p) {
 }
 
 
-function findIndex(p) {
+export function findIndex(p) {
     return function (xs) {
         let i = 0;
         for (const x of xs) {
@@ -228,7 +267,7 @@ function findIndex(p) {
     }
 }
 
-function arrayCompare(as, bs) {
+export function arrayCompare(as, bs) {
     const res = as[0] - bs[0];
     if (res === 0 && as.length > 1) {
         return arrayCompare(as.slice(1), bs.slice(1));
@@ -237,13 +276,13 @@ function arrayCompare(as, bs) {
     }
 }
 
-function* entries(obj) {
+export function* entries(obj) {
     for (const key in obj) {
         yield [key, obj[key]];
     }
 }
 
-function* pairwise(xs) {
+export function* pairwise(xs) {
     let prev;
     for (const x of xs) {
         if (prev) yield [prev, x];
@@ -251,28 +290,28 @@ function* pairwise(xs) {
     }
 }
 
-function* enumerate(xs) {
+export function* enumerate(xs) {
     let i = 0;
     for (const x of xs) {
         yield [i++, x];
     }
 }
 
-function transpose(m) {
+export function transpose(m) {
     return m[0].map((_, i) => m.map(x => x[i]));
 }
 
-function flatten(arr) {
+export function flatten(arr) {
     return arr.reduce((a, x) => a.concat(x), []);
 }
 
-function* walk2D(arr2D) {
+export function* walk2D(arr2D) {
     for (const row of arr2D)
         for (const cell of row)
             yield cell;
 }
 
-function map2D(arr2D, f) {
+export function map2D(arr2D, f) {
     return arr2D.map(row => row.map(f));
 }
 
@@ -281,32 +320,32 @@ function map2D(arr2D, f) {
 //     return A;
 // }
 
-function subtract(A, B) {
+export function subtract(A, B) {
     const C = new Set(A);
     for (const b of B) C.delete(b);
     return C;
 }
 
-function union(A, B) {
+export function union(A, B) {
     return new Set(concat(A, B));
 }
 
-function pad(p, char = '0') {
+export function pad(p, char = '0') {
     return n => (new Array(p).fill(char).join('') + n).slice(-p);
 }
 
-function findAndRemove(arr, f) {
+export function findAndRemove(arr, f) {
     const i = arr.findIndex(f);
     return i === -1
         ? null
         : arr.splice(i, 1)[0];
 }
 
-function makeIncWrapped(maxX) {
+export function makeIncWrapped(maxX) {
     return x => (++x) % maxX;
 }
 
-function* cycle(xs) {
+export function* cycle(xs) {
     const cache = [];
     for (const x of xs) {
         cache.push(x);
@@ -325,7 +364,7 @@ function* cycle(xs) {
 // }
 
 
-function length() {
+export function length() {
     return function (xs) {
         let c = 0;
         for (const _ of xs) c++;
@@ -333,9 +372,8 @@ function length() {
     }
 }
 
-const { Array2D } = require('./array2d.js');
 
-function min(absMax = Number.POSITIVE_INFINITY, cf = (a, b) => a - b) {
+export function min(absMax = Number.POSITIVE_INFINITY, cf = (a, b) => a - b) {
     return function (xs) {
         let min = absMax;
         for (const x of xs) {
@@ -345,7 +383,7 @@ function min(absMax = Number.POSITIVE_INFINITY, cf = (a, b) => a - b) {
     }
 }
 
-function max(absMin = Number.NEGATIVE_INFINITY, cf = (a, b) => a - b) {
+export function max(absMin = Number.NEGATIVE_INFINITY, cf = (a, b) => a - b) {
     return function (xs) {
         let max = absMin;
         for (const x of xs) {
@@ -355,7 +393,7 @@ function max(absMin = Number.NEGATIVE_INFINITY, cf = (a, b) => a - b) {
     }
 }
 
-function minMax([absMax, absMin] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY], cf = (a, b) => a - b) {
+export function minMax([absMax, absMin] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY], cf = (a, b) => a - b) {
     return function (xs) {
         let min = absMax;
         let max = absMin;
@@ -367,7 +405,7 @@ function minMax([absMax, absMin] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_IN
     }
 }
 
-function sum(zero = 0, add = (a, b) => a + b) {
+export function sum(zero = 0, add = (a, b) => a + b) {
     return function(xs) {
         let res = zero;
         for (const x of xs) {
@@ -377,7 +415,9 @@ function sum(zero = 0, add = (a, b) => a + b) {
     }
 }
 
-// function asyncReduce(f, init) {
+// TODO: make "async utils"??
+
+// export function asyncReduce(f, init) {
 //     return async function (xs) {
 //         let res = init;
 //         for await (const x of xs) {
@@ -387,7 +427,7 @@ function sum(zero = 0, add = (a, b) => a + b) {
 //     }
 // }
 
-// function asyncTap(f) {
+// export function asyncTap(f) {
 //     return async function* (xs) {
 //         for await (const x of xs) {
 //             f(x);
@@ -396,7 +436,7 @@ function sum(zero = 0, add = (a, b) => a + b) {
 //     }
 // }
 
-async function streamToString(stream) {
+export async function streamToString(stream) {
     let buffer = Buffer.alloc(0);
     for await (const chunk of stream) {
         buffer = Buffer.concat([buffer, chunk]);
@@ -404,7 +444,7 @@ async function streamToString(stream) {
     return buffer.toString('utf8');
 }
 
-function fillGaps(vs, gapValues = [undefined]) {
+export function fillGaps(vs, gapValues = [undefined]) {
     return function*(xs) {
         for (const [x, v] of zip(xs, vs)) {
             if (!gapValues.includes(x)) yield x;
@@ -412,49 +452,3 @@ function fillGaps(vs, gapValues = [undefined]) {
         }
     }
 }
-
-module.exports = {
-    pipe,
-    some,
-    every,
-    reduce,
-    map,
-    tap,
-    filter,
-    partition,
-    frequencies,
-    concat,
-    zip,
-    zipOuter,
-    skip,
-    take,
-    tee,
-    pluck,
-    range,
-    groupBy,
-    mapValues,
-    find,
-    findIndex,
-    arrayCompare,
-    entries,
-    pairwise,
-    enumerate,
-    transpose,
-    flatten,
-    walk2D,
-    map2D,
-    // deleteAll,
-    subtract,
-    union,
-    findAndRemove,
-    makeIncWrapped,
-    cycle,
-    Array2D,
-    length,
-    min,
-    max,
-    minMax,
-    sum,
-    streamToString,
-    fillGaps,
-};

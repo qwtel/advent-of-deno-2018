@@ -1,15 +1,24 @@
-const { streamToString, pipe, pluck, max, range, subtract, Array2D } = require('./util.js');
+#!/usr/bin/env node --experimental-modules
+
+import { streamToString, pipe, map, fillGaps, pluck, max, range, subtract, Array2D } from './util.mjs';
 
 (async () => {
-    const input = (await streamToString(process.stdin)).trim();
-    const MAX = 10000;
+    const input = await streamToString(process.stdin);
 
-    const coords = input.trim().split('\n').map(s => s.split(', ').map(Number));
-    // console.log(coords);
+    const mIndex = process.argv.findIndex(x => x === '-m');
+    const [MAX] = pipe(
+        [mIndex + 1],
+        map(i => process.argv[i]),
+        map(Number),
+        fillGaps([10000], [NaN])
+    );
+
+    const points = input.trim().split('\n').map(s => s.split(', ').map(Number));
+    // console.log(points);
 
     // console.time('solve');
-    const maxX = 1 + pipe(coords, pluck(0), max());
-    const maxY = 1 + pipe(coords, pluck(1), max());
+    const maxX = 1 + pipe(points, pluck(0), max());
+    const maxY = 1 + pipe(points, pluck(1), max());
     const field = new Array2D([[0, 0], [maxX, maxY]]);
 
     // yield all coordinates of manhatten distance `d` around point `(x, y)`
@@ -30,9 +39,9 @@ const { streamToString, pipe, pluck, max, range, subtract, Array2D } = require('
         // break if no more empty cells within the field
         if (counter === size) break;
 
-        for (const [index, coord] of coords.entries()) {
-            // get all points of manhatten distance `dist` from `coord`
-            for (const p of manhatten(dist, coord)) {
+        for (const [index, point] of points.entries()) {
+            // get all points of manhatten distance `dist` from `point`
+            for (const p of manhatten(dist, point)) {
                 if (field.isOutside(p)) continue;
 
                 const cell = field.get(p);
@@ -69,8 +78,8 @@ const { streamToString, pipe, pluck, max, range, subtract, Array2D } = require('
     const region = [];
     for (const [x, y] of field2.coords()) {
         let total = 0;
-        for (const coord of coords) {
-            total += manhattenDist([x, y], coord)
+        for (const point of points) {
+            total += manhattenDist([x, y], point)
             if (total >= MAX) break;
         }
         // console.log(total);

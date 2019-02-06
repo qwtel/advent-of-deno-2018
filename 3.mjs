@@ -1,17 +1,6 @@
-const fs = require('fs').promises;
+#!/usr/bin/env node --experimental-modules
 
-const { streamToString, range, pluck, max, tee, pipe, filter, length, every, Array2D } = require('./util.js');
-
-function* iproduct(as, bs) {
-    let bs1 = bs, bs2;
-    for (const a of as) {
-        // NOTE: need to work around the fact that iterators are only consumable once
-        [bs1, bs2] = tee(bs1);
-        for (const b of bs2) {
-            yield [a, b];
-        }
-    }
-}
+import { streamToString, range, pluck, max, iproduct, pipe, map, find, filter, length, every, Array2D } from './util.mjs';
 
 (async () => {
     const input = await streamToString(process.stdin);
@@ -22,7 +11,7 @@ function* iproduct(as, bs) {
         .trim()
         .split('\n')
         .map(id => PATTERN.exec(id))
-        .map(ex => ex.slice(1, 6).map(Number))
+        .map(ex => ex.slice(1).map(Number))
         .map(([id, x, y, w, h]) => ({ id, x, y, w, h }));
 
     const maxX = pipe(claims, pluck('x'), max());
@@ -45,16 +34,25 @@ function* iproduct(as, bs) {
 
     // part ii
 
-    for (const { id, x, y, w, h } of claims) {
-        const coords = iproduct(range(x, x + w), range(y, y + h));
-        if (pipe(coords, every(p => field.get(p) === 1))) {
-            console.log(id);
-            break;
-        }
-    }
+    // console.time('for');
+    // for (const { id, x, y, w, h } of claims) {
+    //     const coords = iproduct(range(x, x + w), range(y, y + h));
+    //     if (pipe(coords, every(p => field.get(p) === 1))) {
+    //         console.log(id);
+    //         break;
+    //     }
+    // }
+    // console.timeEnd('for');
+
+    // console.time('pipe');
+    const res = pipe(
+        claims,
+        map(({ id, x, y, w, h }) => ({ 
+            id, 
+            coords: iproduct(range(x, x + w), range(y, y + h))
+        })),
+        find(({ coords }) => pipe(coords, every(p => field.get(p) === 1)))
+    );
+    // console.timeEnd('pipe');
+    console.log(res.id);
 })();
-
-
-
-
-

@@ -1,20 +1,11 @@
-const { streamToString, pipe, some, sum, map, frequencies, zip, skip, tee } = require('./util.js');
+#!/usr/bin/env node --experimental-modules
 
-// NOTE: this wouldn't work with if `bs` is an iterator b/c it's called multiple times...
-function* combinations(as, bs) {
-    let bs1 = bs, bs2;
-    let i = 1;
-    for (const a of as) {
-        [bs1, bs2] = tee(bs1);
-        for (const b of skip(i)(bs2)) {
-            yield [a, b];
-        }
-        i++;
-    }
-}
+import { streamToString, pipe, some, sum, map, filter, frequencies, zip, combinations, find } from './util.mjs';
 
 (async () => {
-    const ids = (await streamToString(process.stdin)).trim().split('\n');
+    const input = await streamToString(process.stdin);
+
+    const ids = input.trim().split('\n');
 
     // const twos = [], threes = [];
     // for (const id of ids) {
@@ -62,14 +53,6 @@ function* combinations(as, bs) {
     // const checksum = twos * threes;
     // console.log(checksum);
 
-    // Version without pipe:
-
-    // const twos = map(id => some(x => x === 2)(frequencies(id).values()))(ids);
-    // const threes = map(id => some(x => x === 3)(frequencies(id).values()))(ids);
-    // const numTwos = reduce(add, 0)(map(bool2Num)(twos));
-    // const numThrees = reduce(add, 0)(map(bool2Num)(threes));
-    // const checksum = numTwos * numThrees;
-
     const twos = pipe(
         ids,
         map(id => frequencies(id)),
@@ -89,20 +72,32 @@ function* combinations(as, bs) {
     const checksum = twos * threes;
     console.log(checksum);
 
-    // what's bad about this solution? 
-    // frequencies calculated twice!
-
     // 2:
     const maxlen = ids[0].length;
 
-    for (const [fst, snd] of combinations(ids, ids)) {
-        const res = [];
-        for (const [l1, l2] of zip(fst, snd)) {
-            if (l1 === l2) res.push(l1);
-        }
-        if (res.length === maxlen - 1) {
-            console.log(res.join(''))
-            break;
-        }
-    }
+    // for (const [id1, id2] of combinations(ids, ids)) {
+    //     const res = [...pipe(
+    //         zip(id1, id2), 
+    //         filter(([l1, l2]) => l1 === l2), 
+    //         map(([l]) => l)
+    //     )]; 
+    //     if (res.length === maxlen - 1) {
+    //         console.log(res.join(''))
+    //         break;
+    //     }
+    // }
+
+    const res = pipe(
+        combinations(ids, ids),
+        map(([id1, id2]) => pipe(
+            zip(id1, id2), 
+            filter(([l1, l2]) => l1 === l2),
+            map(([l]) => l),
+        )),
+        map(ls => [...ls]),
+        find(ls => ls.length === maxlen - 1)
+    );
+
+    console.log(res.join(''));
+
 })();

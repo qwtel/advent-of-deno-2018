@@ -1,4 +1,4 @@
-class Array2D {
+export class Array2D {
     constructor(bounds = [[0, 0], [1, 1]], defaultValue = 0) {
         const [[minX, minY], [maxX, maxY]] = this._bounds = bounds;
         const [diffX, diffY] = [maxX - minX, maxY - minY];
@@ -124,5 +124,3 @@ class Array2D {
         return x < minX || x >= maxX || y < minY || y >= maxY;
     }
 }
-
-module.exports.Array2D = Array2D;

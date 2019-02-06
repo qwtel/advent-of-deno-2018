@@ -1,8 +1,13 @@
-const { pipe, range, map, fillGaps } = require('./util.js');
+#!/usr/bin/env node --experimental-modules
+
+import { pipe, range, map, fillGaps } from './util.mjs';
+import immutable from 'immutable';
 
 (async () => {
+    const pIndex = process.argv.findIndex(x => x === '-p');
+    const rIndex = process.argv.findIndex(x => x === '-r');
     const [NUM_PLAYERS, LAST_ROUND] = pipe(
-        range(2, 4),
+        [pIndex + 1, rIndex + 1],
         map(i => process.argv[i]),
         map(Number),
         fillGaps([428, 70825], [NaN])
@@ -43,8 +48,6 @@ const { pipe, range, map, fillGaps } = require('./util.js');
     }
 
     // sloooooow
-    const immutable = require('immutable');
-
     function solveImmutable(numPlayers, lastRound) {
         const incPlayer = makeIncWrapped(numPlayers);
 

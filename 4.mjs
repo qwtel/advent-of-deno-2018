@@ -1,4 +1,6 @@
-const { streamToString, pipe, find, range, groupBy, mapValues, reduce } = require('./util.js');
+#!/usr/bin/env node --experimental-modules
+
+import { streamToString, pipe, find, range, groupBy, mapValues, reduce } from './util.mjs';
 
 (async () => {
     const input = await streamToString(process.stdin);
@@ -8,11 +10,11 @@ const { streamToString, pipe, find, range, groupBy, mapValues, reduce } = requir
     const RE_ASLEEP = /falls asleep/;
     const RE_WAKEUP = /wakes up/;
 
-    function getDate(r) {
-        return RE_DATE.exec(r).slice(1).map(Number);
+    function parseDate(r) {
+        return { date: RE_DATE.exec(r).slice(1).map(Number) };
     }
 
-    function getType(r) {
+    function parseType(r) {
         if (RE_ASLEEP.test(r)) {
             return { type: 'asleep' };
         }
@@ -29,8 +31,8 @@ const { streamToString, pipe, find, range, groupBy, mapValues, reduce } = requir
         .sort()
         .map(x => [x.substr(0, 18), x.substr(19)])
         .map(([dateStr, str]) => ({
-            date: getDate(dateStr),
-            ...getType(str)
+            ...parseDate(dateStr),
+            ...parseType(str)
         }));
 
     const timeTable = new Map();
@@ -88,7 +90,7 @@ const { streamToString, pipe, find, range, groupBy, mapValues, reduce } = requir
     console.log(maxSleepGuard * maxSleepMin)
 
     // 2
-    let best = pipe(
+    const best = pipe(
         data,
         groupBy(({ guard }) => guard),
         mapValues(getSleepPlan),
