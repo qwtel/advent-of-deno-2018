@@ -71,6 +71,7 @@ export function filter(p) {
     }
 }
 
+// TODO: rename?
 export function partition(p) {
     return function (xs) {
         const [xs1, xs2] = tee(xs);
@@ -101,27 +102,39 @@ export function concatWith(ys) {
 }
 
 export function* zip(...xss) {
-    const iterables = xss.map(xs => xs[Symbol.iterator]());
+    const its = xss.map(xs => xs[Symbol.iterator]());
     while (true) {
-        const results = iterables.map(xs => xs.next());
-        if (results.some(r => r.done)) break;
-        yield results.map(r => r.value);
-    }
-}
-
-export function zipWith(ys) {
-    return function (xs) {
-        return zip(xs, ys);
+        const rs = its.map(it => it.next());
+        if (rs.some(r => r.done)) break;
+        yield rs.map(r => r.value);
     }
 }
 
 export function* zipOuter(...xss) {
-    const iterables = xss.map(xs => xs[Symbol.iterator]());
+    const its = xss.map(xs => xs[Symbol.iterator]());
     while (true) {
-        const results = iterables.map(xs => xs.next());
-        if (results.every(r => r.done)) break;
-        yield results.map(r => r.value);
+        const rs = its.map(it => it.next());
+        if (rs.every(r => r.done)) break;
+        yield rs.map(r => r.value);
     }
+}
+
+export function zipWith1(ys) {
+    return function* (xs) {
+        const it = ys[Symbol.iterator]();
+        for (const x of xs) {
+            yield [x, it.next().value];
+        }
+    };
+}
+
+export function zipWith(...yss) {
+    return function* (xs) {
+        const its = yss.map(ys => ys[Symbol.iterator]());
+        for (const x of xs) {
+            yield [x, ...its.map(it => it.next().value)];
+        }
+    };
 }
 
 // TODO: generalized unzip function that peeks the first element (or takes length arg)
@@ -167,26 +180,16 @@ export function take(n) {
     }
 }
 
-/*
-export function* count() {
-    let i = 0;
-    while (true) {
-        yield i++;
-    }
+// TODO: rename?
+export function splitAt(n) {
+    return function (xs) {
+        const [xs1, xs2] = tee(xs);
+        return [
+            take(n)(xs1),
+            skip(n)(xs2),
+        ];
+    };
 }
-
-export function* enumerate(xs) {
-    let i = 0;
-    for (const x of xs) {
-        yield [i++, x];
-    }
-}
-*/
-
-// export function* partition(xs, n) {
-//     const [xs1, xs2] = tee(xs);
-//     return [take(xs1, n), skip(xs2, n)];
-// }
 
 // https://stackoverflow.com/a/46416353/870615
 export function tee(iterable) {
@@ -492,6 +495,31 @@ export function grouped(n) {
                 group = [];
             }
         }
+    }
+}
+
+export function* interleave2(xs, ys) {
+    for (const [x, y] of zip(xs, ys)) {
+        yield x;
+        yield y;
+    }
+}
+
+export function* interleave(...xss) {
+    for (const xs of zip(...xss))
+        for (const x of xs)
+            yield x;
+}
+
+export function interleaveWith1(ys) {
+    return function (xs) {
+        return interleave2(xs, ys);
+    }
+}
+
+export function interleaveWith(...yss) {
+    return function (xs) {
+        return interleave(xs, ...yss);
     }
 }
 
