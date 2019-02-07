@@ -103,6 +103,12 @@ export function* zip(...xss) {
     }
 }
 
+export function zipWith(ys) {
+    return function (xs) {
+        return zip(xs, ys);
+    }
+}
+
 export function* zipOuter(...xss) {
     const iterables = xss.map(xs => xs[Symbol.iterator]());
     while (true) {
@@ -112,24 +118,34 @@ export function* zipOuter(...xss) {
     }
 }
 
-// export function* unzip(xs) {
-//     for (const [a, b] of xs) {
-//     }
-//     return [{
-//         next() {
+// TODO: generalized unzip function that peeks the first element (or takes length arg)
+export function unzip2() {
+    return function (xs) {
+        const [xs1, xs2] = tee(xs);
+        return [
+            pluck(0)(xs1),
+            pluck(1)(xs2),
+        ];
+    }
+}
 
-//         }
-//     }, {
-
-//     }]
-// }
+export function unzip3() {
+    return function (xs) {
+        const [xs1, _xs] = tee(xs);
+        const [xs2, xs3] = tee(_xs);
+        return [
+            pluck(0)(xs1),
+            pluck(1)(xs2),
+            pluck(2)(xs3),
+        ];
+    }
+}
 
 export function skip(n) {
     return function* (xs) {
         let i = 0;
         for (let x of xs) {
-            i++;
-            if (i <= n) continue;
+            if (++i <= n) continue;
             yield x;
         }
     }
@@ -139,8 +155,7 @@ export function take(n) {
     return function* (xs) {
         let i = 0;
         for (let x of xs) {
-            i++;
-            if (i > n) break;
+            if (++i > n) break;
             yield x;
         }
     }
@@ -289,11 +304,13 @@ export function* entries(obj) {
     }
 }
 
-export function* pairwise(xs) {
-    let prev;
-    for (const x of xs) {
-        if (prev) yield [prev, x];
-        prev = x;
+export function pairwise() {
+    return function* (xs) {
+        let prev;
+        for (const x of xs) {
+            if (prev) yield [prev, x];
+            prev = x;
+        }
     }
 }
 
@@ -408,7 +425,7 @@ export function minMax([absMax, absMin] = [Number.POSITIVE_INFINITY, Number.NEGA
 }
 
 export function sum(zero = 0, add = (a, b) => a + b) {
-    return function(xs) {
+    return function (xs) {
         let res = zero;
         for (const x of xs) {
             res = add(res, x);
@@ -447,10 +464,27 @@ export async function read(stream) {
 }
 
 export function fillGaps(vs, gapValues = [undefined]) {
-    return function*(xs) {
+    return function* (xs) {
         for (const [x, v] of zip(xs, vs)) {
             if (!gapValues.includes(x)) yield x;
             else yield v;
+        }
+    }
+}
+
+export function* constantly(value) {
+    while (true) yield value;
+}
+
+export function grouped(n) {
+    return function*(xs) {
+        let group = [];
+        for (const x of xs) {
+            group.push(x);
+            if (group.length === n) {
+                yield group;
+                group = [];
+            }
         }
     }
 }

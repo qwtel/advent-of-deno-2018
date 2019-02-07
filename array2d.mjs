@@ -73,10 +73,12 @@ export class Array2D {
         return a;
     }
 
+    // TODO: this is probably not doing what you'd expect
     *rows() {
         for (const row of this.clone()._array) yield row;
     }
 
+    // TODO: this is probably not doing what you'd expect
     *columns() {
         for (const col of this.transpose()._array) yield col;
     }
