@@ -1,9 +1,9 @@
 #!/usr/bin/env node --experimental-modules
 
-import { streamToString, pipe, some, sum, map, filter, frequencies, zip, combinations, find } from './util.mjs';
+import { read, pipe, some, sum, map, filter, frequencies, zip, combinations, find } from './util.mjs';
 
 (async () => {
-    const input = await streamToString(process.stdin);
+    const input = await read(process.stdin);
 
     const ids = input.trim().split('\n');
 
@@ -56,7 +56,7 @@ import { streamToString, pipe, some, sum, map, filter, frequencies, zip, combina
     const twos = pipe(
         ids,
         map(id => frequencies(id)),
-        map(freq => pipe(freq.values(), some(x => x === 2))),
+        map(fqs => pipe(fqs.values(), some(x => x === 2))),
         map(x => x ? 1 : 0),
         sum(0),
     );
@@ -64,7 +64,7 @@ import { streamToString, pipe, some, sum, map, filter, frequencies, zip, combina
     const threes = pipe(
         ids,
         map(id => frequencies(id)),
-        map(freq => pipe(freq.values(), some(x => x === 3))),
+        map(fqs => pipe(fqs.values(), some(x => x === 3))),
         map(x => x ? 1 : 0),
         sum(0),
     );

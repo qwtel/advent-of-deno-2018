@@ -1,17 +1,14 @@
 #!/usr/bin/env node --experimental-modules
 
-import { pipe, range, map, fillGaps } from './util.mjs';
+import { read, pipe, range, map } from './util.mjs';
 import immutable from 'immutable';
 
 (async () => {
-    const pIndex = process.argv.findIndex(x => x === '-p');
-    const rIndex = process.argv.findIndex(x => x === '-r');
-    const [NUM_PLAYERS, LAST_ROUND] = pipe(
-        [pIndex + 1, rIndex + 1],
-        map(i => process.argv[i]),
-        map(Number),
-        fillGaps([428, 70825], [NaN])
-    );
+    const input = await read(process.stdin);
+
+    const RE = /(\d+) players; last marble is worth (\d+) points/;
+
+    const [numPlayers, lastRound] = RE.exec(input).slice(1).map(Number);
 
     function solve(numPlayers, lastRound) {
         const circle = [0];
@@ -104,6 +101,6 @@ import immutable from 'immutable';
         ).scores;
     }
 
-    console.log(Math.max(...solve(NUM_PLAYERS, LAST_ROUND).values()));
+    console.log(Math.max(...solve(numPlayers, lastRound).values()));
 
 })();

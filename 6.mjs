@@ -1,9 +1,9 @@
 #!/usr/bin/env node --experimental-modules
 
-import { streamToString, pipe, map, fillGaps, pluck, max, range, subtract, Array2D } from './util.mjs';
+import { read, pipe, map, fillGaps, pluck, max, range, subtract, Array2D } from './util.mjs';
 
 (async () => {
-    const input = await streamToString(process.stdin);
+    const input = await read(process.stdin);
 
     const mIndex = process.argv.findIndex(x => x === '-m');
     const [MAX] = pipe(

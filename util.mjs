@@ -73,9 +73,10 @@ export function filter(p) {
 
 export function partition(p) {
     return function (xs) {
+        const [xs1, xs2] = tee(xs);
         return [
-            filter(p)(xs),
-            filter(x => !p(x))(xs),
+            filter(p)(xs1),
+            filter(x => !p(x))(xs2),
         ];
     }
 }
@@ -240,6 +241,12 @@ export function groupBy(f) {
     }
 }
 
+export function mapKeys(f) {
+    return function* (xs) {
+        for (const [k, v] of xs) yield [f(k), v];
+    }
+}
+
 export function mapValues(f) {
     return function* (xs) {
         for (const [k, v] of xs) yield [k, f(v)];
@@ -341,21 +348,16 @@ export function findAndRemove(arr, f) {
         : arr.splice(i, 1)[0];
 }
 
-export function makeIncWrapped(maxX) {
-    return x => (++x) % maxX;
-}
-
 export function* cycle(xs) {
     const cache = [];
     for (const x of xs) {
         cache.push(x);
         yield x;
     }
-    const inc = makeIncWrapped(cache.length);
     let i = 0;
     while (true) {
         yield cache[i];
-        i = inc(i);
+        i = (i + 1) % cache.length;
     }
 }
 
@@ -436,7 +438,7 @@ export function sum(zero = 0, add = (a, b) => a + b) {
 //     }
 // }
 
-export async function streamToString(stream) {
+export async function read(stream) {
     let buffer = Buffer.alloc(0);
     for await (const chunk of stream) {
         buffer = Buffer.concat([buffer, chunk]);

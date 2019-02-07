@@ -1,51 +1,47 @@
 #!/usr/bin/env node --experimental-modules
 
-import { streamToString } from './util.mjs';
+import { read } from './util.mjs';
 
 (async () => {
-    const input = (await streamToString(process.stdin)).trim();
+    const input = await read(process.stdin);
 
-    const treeInput = input.split(' ').map(Number);
+    const treeInput = input.trim().split(' ').map(Number);
 
     // 1
-    {
-        function walkTree(t) {
-            const [a, b] = [t.shift(), t.shift()];
-            let num = 0;
-            for (let i = 0; i < a; i++) num += walkTree(t);
-            for (let j = 0; j < b; j++) num += t.shift();
-            return num;
-        }
-
-        console.log(walkTree([...treeInput]));
+    function walkTree(it) {
+        const [a, b] = [it.next().value, it.next().value];
+        let num = 0;
+        for (let i = 0; i < a; i++) num += walkTree(it);
+        for (let j = 0; j < b; j++) num += it.next().value;
+        return num;
     }
+
+    console.log(walkTree(treeInput[Symbol.iterator]()));
 
     // 2
-    {
-        function buildTree(t, c = 0) {
-            const letter = String.fromCharCode(c + 65);
-            const children = [];
-            const meta = [];
-            const [a, b] = [t.shift(), t.shift()];
-            for (let i = 0; i < a; i++) children.push(buildTree(t, ++c));
-            for (let j = 0; j < b; j++) meta.push(t.shift());
-            return { letter, children, meta };
-        }
-
-        const add = (a, b) => a + b;
-
-        function countStuff({ children, meta }) {
-            if (!children.length) return meta.reduce(add, 0);
-            return meta
-                .map(i => children[i - 1])
-                .filter(x => x)
-                .map(c => countStuff(c))
-                .reduce(add, 0);
-        }
-
-        const tree = buildTree([...treeInput]);
-        // console.log(tree);
-        console.log(countStuff(tree));
+    function buildTree(it, c = 0) {
+        const letter = String.fromCharCode(c + 65);
+        const children = [];
+        const meta = [];
+        const [a, b] = [it.next().value, it.next().value];
+        for (let i = 0; i < a; i++) children.push(buildTree(it, ++c));
+        for (let j = 0; j < b; j++) meta.push(it.next().value);
+        return { letter, children, meta };
     }
+
+    const add = (a, b) => a + b;
+
+    function countStuff({ children, meta }) {
+        if (!children.length) return meta.reduce(add, 0);
+        return meta
+            .map(i => children[i - 1])
+            .filter(x => x)
+            .map(c => countStuff(c))
+            .reduce(add, 0);
+    }
+
+    const tree = buildTree(treeInput[Symbol.iterator]());
+    // console.log(tree);
+    console.log(countStuff(tree));
 
 })();

@@ -1,9 +1,9 @@
 #!/usr/bin/env node --experimental-modules
 
-import { streamToString, range, pluck, max, iproduct, pipe, map, find, filter, length, every, Array2D } from './util.mjs';
+import { read, range, pluck, max, iproduct, pipe, map, find, filter, length, every, Array2D } from './util.mjs';
 
 (async () => {
-    const input = await streamToString(process.stdin);
+    const input = await read(process.stdin);
 
     const PATTERN = /#(\d+)\ @\ (\d+),(\d+):\ (\d+)x(\d+)/;
 
@@ -47,10 +47,7 @@ import { streamToString, range, pluck, max, iproduct, pipe, map, find, filter, l
     // console.time('pipe');
     const res = pipe(
         claims,
-        map(({ id, x, y, w, h }) => ({ 
-            id, 
-            coords: iproduct(range(x, x + w), range(y, y + h))
-        })),
+        map(({ id, x, y, w, h }) => ({ id, coords: iproduct(range(x, x + w), range(y, y + h)) })),
         find(({ coords }) => pipe(coords, every(p => field.get(p) === 1)))
     );
     // console.timeEnd('pipe');

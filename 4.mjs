@@ -1,27 +1,27 @@
 #!/usr/bin/env node --experimental-modules
 
-import { streamToString, pipe, find, range, groupBy, mapValues, reduce } from './util.mjs';
+import { read, pipe, find, range, groupBy, mapValues, reduce } from './util.mjs';
 
 (async () => {
-    const input = await streamToString(process.stdin);
+    const input = await read(process.stdin);
 
     const RE_DATE = /\[(.+)-(.+)-(.+)\ (.+):(.+)\]/;
     const RE_BEGINS = /Guard\ #(\d+) begins shift/;
     const RE_ASLEEP = /falls asleep/;
     const RE_WAKEUP = /wakes up/;
 
-    function parseDate(r) {
-        return { date: RE_DATE.exec(r).slice(1).map(Number) };
+    function parseDate(s) {
+        return { date: RE_DATE.exec(s).slice(1).map(Number) };
     }
 
-    function parseType(r) {
-        if (RE_ASLEEP.test(r)) {
+    function parseType(s) {
+        if (RE_ASLEEP.test(s)) {
             return { type: 'asleep' };
         }
-        if (RE_WAKEUP.test(r)) {
+        if (RE_WAKEUP.test(s)) {
             return { type: 'wakeup' };
         }
-        const [, guard] = RE_BEGINS.exec(r);
+        const [, guard] = RE_BEGINS.exec(s);
         return { type: 'begins', guard: Number(guard) };
     }
 
@@ -30,9 +30,9 @@ import { streamToString, pipe, find, range, groupBy, mapValues, reduce } from '.
         .split('\n')
         .sort()
         .map(x => [x.substr(0, 18), x.substr(19)])
-        .map(([dateStr, str]) => ({
+        .map(([dateStr, typeStr]) => ({
             ...parseDate(dateStr),
-            ...parseType(str)
+            ...parseType(typeStr)
         }));
 
     const timeTable = new Map();
@@ -98,7 +98,7 @@ import { streamToString, pipe, find, range, groupBy, mapValues, reduce } from '.
             const maxV = Math.max(...sleepPlan);
             if (maxV > best.maxV) {
                 const maxMin = sleepPlan.findIndex(x => x === maxV);
-                return { maxV, guard, maxMin };
+                return { guard, maxV, maxMin };
             }
             return best;
         }, { guard: null, maxV: 0 })

@@ -1,9 +1,9 @@
 #!/usr/bin/env node --experimental-modules
 
-import { streamToString, pipe, map, min } from './util.mjs';
+import { read, pipe, map, min } from './util.mjs';
 
 (async () => {
-    const input = (await streamToString(process.stdin)).trim();
+    const input = await read(process.stdin);
 
     function isReacting(x, y) {
         return Math.abs(x.charCodeAt(0) - y.charCodeAt(0)) === 32
@@ -43,7 +43,7 @@ import { streamToString, pipe, map, min } from './util.mjs';
         return polymer.reduce(addUnit, []);
     }
 
-    const polymer = input.split('');
+    const polymer = input.trim().split('');
     // console.time('solve');
     const res = solve(polymer);
     // console.timeEnd('solve');

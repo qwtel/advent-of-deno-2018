@@ -1,8 +1,10 @@
 #!/usr/bin/env node --experimental-modules
 
-import { streamToString, pipe, some, pluck, flatten, findAndRemove, range, map, fillGaps, partition, subtract, } from './util.mjs';
+import { read, pipe, some, pluck, flatten, findAndRemove, range, map, fillGaps, partition, subtract, } from './util.mjs';
 
 (async () => {
+    const input = await read(process.stdin);
+
     const dIndex = process.argv.findIndex(x => x === '-d');
     const wIndex = process.argv.findIndex(x => x === '-w');
     const [BASE_DURATION, NUM_WORKERS] = pipe(
@@ -12,9 +14,7 @@ import { streamToString, pipe, some, pluck, flatten, findAndRemove, range, map, 
         fillGaps([60, 5], [NaN])
     );
 
-    const input = (await streamToString(process.stdin)).trim();
-
-    const RE = /Step (\w) must be finished before step (\w) can begin./;
+    const RE = /Step (\w) must be finished before step (\w) can begin\./;
 
     const edges = input.trim().split('\n').map(line => RE.exec(line).slice(1));
 
@@ -30,6 +30,7 @@ import { streamToString, pipe, some, pluck, flatten, findAndRemove, range, map, 
     const destinations = pipe(edges, pluck(1));
     const startingPoints = subtract(points, destinations);
 
+    // 1
     {
         const queue = [...startingPoints].sort();
         const order = [];
@@ -39,15 +40,14 @@ import { streamToString, pipe, some, pluck, flatten, findAndRemove, range, map, 
 
         while (queue.length) {
             // Find the first element in the queue that has all it's dependencies satisfied
-            const curr = findAndRemove(queue, x => depsComplete(x));
+            const curr = findAndRemove(queue, depsComplete);
 
             order.push(curr);
 
             // Add next potential steps to the queue, 
             // unless they're already in the queue or completed.
-            const next = (dirs.get(curr) || []).filter(n => !taskInSystem(n));
-            for (const n of next) queue.push(n);
-            queue.sort();
+            const next = dirs.get(curr) || [];
+            queue.push(...next.filter(n => !taskInSystem(n))).sort();
         }
 
         console.log(order.join(''));
@@ -73,7 +73,7 @@ import { streamToString, pipe, some, pluck, flatten, findAndRemove, range, map, 
             const [available, busy] = pipe(workers, partition(([, w]) => w.task === null));
 
             for (const [n] of available) {
-                const task = findAndRemove(queue, t => depsComplete(t));
+                const task = findAndRemove(queue, depsComplete);
                 if (!task) break;
 
                 workers.set(n, { task, duration: getDuration(task) })
@@ -92,9 +92,8 @@ import { streamToString, pipe, some, pluck, flatten, findAndRemove, range, map, 
 
                     order.push(state.task);
 
-                    const next = (dirs.get(state.task) || [])
-                        .filter(n => !taskInSystem(n) && !isInProgress(n));
-                    for (const n of next) queue.push(n);
+                    const next = dirs.get(state.task) || [];
+                    queue.push(...next.filter(n => !taskInSystem(n) && !isInProgress(n)));
                 }
             }
             queue.sort();
