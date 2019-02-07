@@ -24,18 +24,11 @@ import { read, pipe, map, min } from './util.mjs';
     //     return arr;
     // }
 
-    function getLast(a) {
-        return a[a.length - 1];
-    }
-
     // fast solution... O(n)
-    function addUnit(polymer, unit) {
-        const peek = getLast(polymer);
-        if (peek && isReacting(peek, unit)) {
-            polymer.pop();
-        } else {
-            polymer.push(unit)
-        }
+    function addUnit(polymer, b) {
+        const a = polymer.pop();
+        if (!a) polymer.push(b);
+        else if (!isReacting(a, b)) polymer.push(a, b);
         return polymer;
     }
 
@@ -44,14 +37,11 @@ import { read, pipe, map, min } from './util.mjs';
     }
 
     const polymer = input.trim().split('');
-    // console.time('solve');
     const res = solve(polymer);
-    // console.timeEnd('solve');
     console.log(res.length);
 
 
     // 2
-    // console.time('solve2');
     const notLetter = letter => x => x !== letter && x.toLowerCase() !== letter;
     const letters = new Set(polymer.map(x => x.toLowerCase()));
     const solution = pipe(
@@ -61,6 +51,5 @@ import { read, pipe, map, min } from './util.mjs';
         map(x => x.length),
         min(polymer.length)
     );
-    // console.timeEnd('solve2');
     console.log(solution);
 })();

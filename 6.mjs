@@ -1,17 +1,11 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, map, fillGaps, pluck, max, range, subtract, Array2D } from './util.mjs';
+import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util.mjs';
 
 (async () => {
     const input = await read(process.stdin);
 
-    const mIndex = process.argv.findIndex(x => x === '-m');
-    const [MAX] = pipe(
-        [mIndex + 1],
-        map(i => process.argv[i]),
-        map(Number),
-        fillGaps([10000], [NaN])
-    );
+    const [MAX] = args(['-m'], [10000]);
 
     const points = input.trim().split('\n').map(s => s.split(', ').map(Number));
     // console.log(points);

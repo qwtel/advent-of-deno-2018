@@ -2,8 +2,8 @@ import { Array2D } from './array2d.mjs';
 
 export { Array2D };
 
-export function pipe(coll, ...fs) {
-    let res = coll;
+export function pipe(x, ...fs) {
+    let res = x;
     for (const f of fs) {
         res = f(res);
     }
@@ -92,6 +92,12 @@ export function frequencies(iterable) {
 export function* concat(...xss) {
     for (xs of xss)
         for (const x of xs) yield x;
+}
+
+export function concatWith(ys) {
+    return function (xs) {
+        return concat(xs, ys);
+    }
 }
 
 export function* zip(...xss) {
@@ -206,11 +212,11 @@ export function tee(iterable) {
 }
 
 // TODO: generalize to n parameters
-export function* iproduct(as, bs) {
-    let bs1 = bs, bs2;
+export function* product(as, bs) {
+    let _bs = bs, bs2;
     for (const a of as) {
         // TODO: only tee when bs is an iterator!?
-        [bs1, bs2] = tee(bs1);
+        [_bs, bs2] = tee(_bs);
         for (const b of bs2) {
             yield [a, b];
         }
@@ -218,12 +224,13 @@ export function* iproduct(as, bs) {
 }
 
 // TODO: generalize to n parameters
+// TODO: other name (look at python itertools?)
 export function* combinations(as, bs) {
-    let bs1 = bs, bs2;
+    let _bs = bs, bs2;
     let i = 1;
     for (const a of as) {
         // TODO: only tee when bs is an iterator!?
-        [bs1, bs2] = tee(bs1);
+        [_bs, bs2] = tee(_bs);
         for (const b of skip(i++)(bs2)) {
             yield [a, b];
         }
@@ -239,9 +246,7 @@ export function pluck(key) {
 }
 
 export function* range(start = 0, end = Number.MAX_SAFE_INTEGER, step = 1) {
-    for (let i = start; i < end; i += step) {
-        yield i;
-    }
+    for (let i = start; i < end; i += step) yield i;
 }
 
 export function groupBy(f) {
@@ -306,9 +311,10 @@ export function* entries(obj) {
 
 export function pairwise() {
     return function* (xs) {
-        let prev;
-        for (const x of xs) {
-            if (prev) yield [prev, x];
+        const it = xs[Symbol.iterator]();
+        let prev = it.next().value;
+        for (const x of it) {
+            yield [prev, x];
             prev = x;
         }
     }
@@ -477,7 +483,7 @@ export function* constantly(value) {
 }
 
 export function grouped(n) {
-    return function*(xs) {
+    return function* (xs) {
         let group = [];
         for (const x of xs) {
             group.push(x);
@@ -487,4 +493,14 @@ export function grouped(n) {
             }
         }
     }
+}
+
+export function args(flags, defaults) {
+    return pipe(
+        flags,
+        map(flag => process.argv.findIndex(arg => arg === flag)),
+        map(i => process.argv[i + 1]),
+        map(Number),
+        fillGaps(defaults, [NaN]),
+    );
 }

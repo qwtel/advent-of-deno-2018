@@ -27,7 +27,7 @@ import {
         map(line => RE.exec(line).slice(1).map(Number)),
         map(([a, b, c, d]) => [[a, b], [c, d]]),
         unzip2(),
-        map(x => [...x]),
+        map(it => [...it]),
     );
 
     const getBounds = (ps) => {
@@ -66,6 +66,8 @@ import {
     for (const row of field.map(x => x ? '#' : '.').transpose().rows()) {
         console.log(row.join(''));
     }
+
+    // 2
     console.log(sec);
 
     // old solutions, not quite as nice
