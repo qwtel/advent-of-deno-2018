@@ -1,5 +1,5 @@
 # Advent of ES
-JavaScript solutions for [Advent of Code 2018][AoC] using the latest ECMAScript features, specifically generators and a [custom iterator library](./util.mjs).
+JavaScript solutions for [Advent of Code 2018][AoC] using the latest ECMAScript features, specifically generators and iterators.
 
 [AoC]: https://adventofcode.com/2018
 
