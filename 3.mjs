@@ -46,7 +46,7 @@ import { read, range, pluck, max, product, pipe, map, find, filter, length, ever
     const res = pipe(
         claims,
         map(({ id, x, y, w, h }) => ({
-            id, coords: iproduct(range(x, x + w), range(y, y + h)),
+            id, coords: product(range(x, x + w), range(y, y + h)),
         })),
         find(({ coords }) => pipe(coords,
             every(p => field.get(p) === 1))
