@@ -18,6 +18,7 @@ import {
 (async () => {
     const input = await read(process.stdin);
 
+    // Usage: ./7.mjs -d 0 -w 2
     const [BASE_DURATION, NUM_WORKERS] = args(['-d', '-w'], [60, 5]);
 
     const RE = /Step (\w) must be finished before step (\w) can begin\./;

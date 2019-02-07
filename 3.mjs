@@ -27,31 +27,28 @@ import { read, range, pluck, max, product, pipe, map, find, filter, length, ever
         }
     }
 
+    // 1
     const num = pipe(field, filter(x => x > 1), length());
     console.log(num);
 
-    // part ii
+    // 2
+    function solve2() {
+        for (const { id, x, y, w, h } of claims) {
+            const coords = iproduct(range(x, x + w), range(y, y + h));
+            if (pipe(coords, every(p => field.get(p) === 1))) {
+                return id;
+            }
+        }
+    }
+    console.log(solve2());
 
-    // console.time('for');
-    // for (const { id, x, y, w, h } of claims) {
-    //     const coords = iproduct(range(x, x + w), range(y, y + h));
-    //     if (pipe(coords, every(p => field.get(p) === 1))) {
-    //         console.log(id);
-    //         break;
-    //     }
-    // }
-    // console.timeEnd('for');
-
-    // console.time('pipe');
-    const res = pipe(
-        claims,
-        map(({ id, x, y, w, h }) => ({
-            id, coords: product(range(x, x + w), range(y, y + h)),
-        })),
-        find(({ coords }) => pipe(coords,
-            every(p => field.get(p) === 1))
-        )
-    );
-    // console.timeEnd('pipe');
-    console.log(res.id);
+    // const res = pipe(
+    //     claims,
+    //     map(({ id, x, y, w, h }) => ({
+    //         id,
+    //         coords: product(range(x, x + w), range(y, y + h)),
+    //     })),
+    //     find(({ coords }) => pipe(coords, every(p => field.get(p) === 1)))
+    // );
+    // console.log(res.id);
 })();

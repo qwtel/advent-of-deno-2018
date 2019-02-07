@@ -5,6 +5,7 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util.m
 (async () => {
     const input = await read(process.stdin);
 
+    // Usage: ./6.mjs -m 32
     const [MAX] = args(['-m'], [10000]);
 
     const points = input.trim().split('\n').map(s => s.split(', ').map(Number));
@@ -53,8 +54,8 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util.m
     const field2 = field.map(({ index }) => index);
 
     // we're not interested in letters that touch the edge of the field
-    const excluded = new Set(field2.edgeValues());
     const letters = new Set(field2);
+    const excluded = new Set(field2.edgeValues());
     const included = subtract(letters, excluded);
 
     const counts = new Map();
@@ -63,7 +64,7 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util.m
             counts.set(letter, 1 + (counts.get(letter) || 0));
         }
     }
-    const res = pipe(counts.values(), max(0));
+    const res = pipe(counts.values(), max());
     console.log(res);
 
     // 2

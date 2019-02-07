@@ -7,6 +7,7 @@ import { read, pipe, some, sum, map, filter, frequencies, zip, combinations, fin
 
     const ids = input.trim().split('\n');
 
+    // 1
     const [twos, threes] = pipe(
         ids,
         map(id => frequencies(id)),
@@ -23,6 +24,22 @@ import { read, pipe, some, sum, map, filter, frequencies, zip, combinations, fin
 
     const checksum = twos * threes;
     console.log(checksum);
+
+    // 2
+    const maxlen = ids[0].length;
+
+    const id = pipe(
+        combinations(ids, ids),
+        map(([id1, id2]) => pipe(
+            zip(id1, id2),
+            filter(([c1, c2]) => c1 === c2),
+            map(([c]) => c),
+        )),
+        map(cs => [...cs].join('')),
+        find(id => id.length === maxlen - 1),
+    );
+
+    console.log(id);
 
     // const twos = [], threes = [];
     // for (const id of ids) {
@@ -43,22 +60,6 @@ import { read, pipe, some, sum, map, filter, frequencies, zip, combinations, fin
     //     }
     // }
     // console.log(twos.length * threes.length);
-
-    // 2:
-    const maxlen = ids[0].length;
-
-    const id = pipe(
-        combinations(ids, ids),
-        map(([id1, id2]) => pipe(
-            zip(id1, id2),
-            filter(([c1, c2]) => c1 === c2),
-            map(([c]) => c),
-        )),
-        map(cs => [...cs].join('')),
-        find(id => id.length === maxlen - 1),
-    );
-
-    console.log(id);
 
     // for (const [id1, id2] of combinations(ids, ids)) {
     //     const res = [];
