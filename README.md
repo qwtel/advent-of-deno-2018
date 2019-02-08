@@ -6,7 +6,7 @@ JavaScript solutions for [Advent of Code 2018][AoC] using the latest ECMAScript 
 ## Run
 Requires node 11+. Input via `stdin`, e.g. 
 
-    cat 1.txt | ./1.mjs
+    cat input/1.txt | ./01.mjs
 
 `.mjs` files are exectutable to avoid having to type `node --experimental-modules` over and over again.
 
