@@ -38,7 +38,7 @@ export function reduce(f, init) {
     }
 }
 
-export function reductions(f, init) {
+export function scan(f, init) {
     return function* (xs) {
         let res = init;
         for (const x of xs) {

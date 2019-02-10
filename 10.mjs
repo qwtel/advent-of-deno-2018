@@ -9,7 +9,7 @@ import {
     pipe,
     map,
     minMax,
-    reductions,
+    scan,
     pairwise,
     find,
     pluck,
@@ -41,7 +41,7 @@ import {
 
     const [[finalPositions], sec] = pipe(
         constantly(velocities),
-        reductions(
+        scan(
             (positions, velocities) => [...pipe(
                 positions,
                 zipWith(velocities),

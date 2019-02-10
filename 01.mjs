@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, reduce, cycle, reductions, find } from './util.mjs';
+import { read, pipe, reduce, cycle, scan, find } from './util.mjs';
 
 (async () => {
     const input = (await read(process.stdin))
@@ -16,9 +16,9 @@ import { read, pipe, reduce, cycle, reductions, find } from './util.mjs';
     // 2
     const res = pipe(
         cycle(input),
-        reductions(add, 0),
-        reductions(
-            (seen, freq) => seen.has(freq)
+        scan(add, 0),
+        scan((seen, freq) =>
+            seen.has(freq)
                 ? { reduced: freq }
                 : seen.add(freq),
             new Set()

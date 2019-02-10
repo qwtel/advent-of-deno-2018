@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, some, sum, map, filter, frequencies, zip, combinations, find, unzip2 } from './util.mjs';
+import { read, pipe, some, sum, map, filter, reduce, frequencies, zip, combinations, find, unzip2 } from './util.mjs';
 
 (async () => {
     const input = await read(process.stdin);
@@ -8,7 +8,7 @@ import { read, pipe, some, sum, map, filter, frequencies, zip, combinations, fin
     const ids = input.trim().split('\n');
 
     // 1
-    const [twos, threes] = pipe(
+    const checksum = pipe(
         ids,
         map(id => frequencies(id)),
         map(fqs => [
@@ -16,13 +16,10 @@ import { read, pipe, some, sum, map, filter, frequencies, zip, combinations, fin
             pipe(fqs.values(), some(x => x === 3)),
         ]),
         unzip2(),
-        map(xs => pipe(xs,
-            map(x => x ? 1 : 0),
-            sum(),
-        )),
+        map(xs => pipe(xs, map(x => x ? 1 : 0), sum())),
+        reduce((a, b) => a * b, 1),
     );
 
-    const checksum = twos * threes;
     console.log(checksum);
 
     // 2

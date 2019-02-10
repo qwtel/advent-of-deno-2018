@@ -16,12 +16,12 @@ With generators, complex computations can be represented using functional buildi
 ~~~js
 console.log(pipe(
     cycle(input),
-    reductions((a, b) => a + b, 0),
-    reductions(
-        (seen, freq) => seen.has(freq)
+    scan((a, b) => a + b, 0),
+    scan((seen, freq) => 
+        seen.has(freq)
             ? { reduced: freq }
             : seen.add(freq),
-        new Set()
+        new Set(),
     ),
     find(({ reduced }) => reduced),
 ).reduced);
@@ -48,4 +48,4 @@ while (true) {
 
 Why is the first solution "better"? It's really a matter of taste, but personally I prefer the fact that each idea is expressed separately. I.e. the cycling of the input is one line instead of explicitly incrementing and wrapping and index, as is the lookup in the set, etc...
 
-Obviously the first solutions requires a variety of helper functions such as `pipe`, `reductions`, `find`, etc. However, as a look at [`util.mjs`](./util.mjs) will show, they are suprisingly easy to implement with the help of generator functions.
+Obviously the first implementation requires a variety of helper functions such as `pipe`, `scan`, `find`, etc. However, as a look at [`util.mjs`](./util.mjs) will show, they are suprisingly compact and easy to implement using generator functions.
