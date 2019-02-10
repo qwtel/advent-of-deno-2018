@@ -574,7 +574,7 @@ export function args(flags, defaults) {
         map(flag => process.argv.findIndex(arg => arg === flag)),
         map(i => process.argv[i + 1]),
         map(Number),
-        replaceWhen(x => x === NaN, defaults),
+        replaceWhen(Number.isNaN, defaults),
     );
 }
 
