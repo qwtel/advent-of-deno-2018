@@ -1,9 +1,10 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, map, sum, range, groupBy, mapValues, max, maxBy } from './util.mjs';
+import { read, pipe, sort, map, reduce, sum, range, groupBy, mapValues, max, maxBy } from './util.mjs';
 
 (async () => {
     const input = await read(process.stdin);
+    const lines = input.trim().split('\n');
 
     const RE_DATE = /\[(.+)-(.+)-(.+)\ (.+):(.+)\]/;
     const RE_BEGINS = /Guard\ #(\d+) begins shift/;
@@ -25,16 +26,16 @@ import { read, pipe, map, sum, range, groupBy, mapValues, max, maxBy } from './u
         return { type: 'begins', guard: Number(guard) };
     }
 
-    const [, sleepLog] = input
-        .trim()
-        .split('\n')
-        .sort()
-        .map(x => [x.substr(0, 18), x.substr(19)])
-        .map(([dateStr, typeStr]) => ({
+
+    const [, sleepLog] = pipe(
+        lines,
+        sort(),
+        map(x => [x.substr(0, 18), x.substr(19)]),
+        map(([dateStr, typeStr]) => ({
             ...parseDate(dateStr),
             ...parseType(typeStr)
-        }))
-        .reduce(([guard, log], entry) => {
+        })),
+        reduce(([guard, log], entry) => {
             switch (entry.type) {
                 case 'begins': {
                     return [entry.guard, log];
@@ -47,15 +48,17 @@ import { read, pipe, map, sum, range, groupBy, mapValues, max, maxBy } from './u
                     })];
                 }
                 case 'wakeup': {
-                    const prevEntry = log.pop();
+                    const { guard, start } = log.pop();
                     const { date: [, , , , minute] } = entry;
                     return [guard, log.concat({
-                        ...prevEntry,
+                        guard, 
+                        start,
                         end: minute,
                     })];
                 }
             }
-        }, [-1, []]);
+        }, [-1, []]),
+    );
 
     const sleepLogByGuard = new Map(pipe(
         sleepLog,
@@ -78,8 +81,8 @@ import { read, pipe, map, sum, range, groupBy, mapValues, max, maxBy } from './u
         const [guard] = pipe(
             sleepLogByGuard,
             mapValues(log => pipe(
-                log, 
-                map(({ start, end }) => end - start), 
+                log,
+                map(({ start, end }) => end - start),
                 sum())),
             maxBy(([, a], [, b]) => a - b)
         );

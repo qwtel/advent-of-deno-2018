@@ -352,6 +352,12 @@ export function interleaveWith(...yss) {
     }
 }
 
+export function sort(cf) {
+    return function*(xs) {
+        for (const x of [...xs].sort(cf)) yield x;
+    }
+}
+
 
 // NOT OPERATORS
 
@@ -460,10 +466,7 @@ function isIterator(xs) {
 function tee(it) {
     // If `it` is not an iterator, i.e. can be traversed more than once, 
     // we just return it unmodified.
-    if (!isIterator(it)) {
-        console.log('not an iterator');
-        return [it, it];
-    }
+    if (!isIterator(it)) return [it, it];
 
     const source = it[Symbol.iterator]();
     const buffers = [[], []];
