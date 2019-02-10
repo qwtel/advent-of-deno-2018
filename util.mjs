@@ -425,17 +425,11 @@ export function* constantly(value) {
     while (true) yield value;
 }
 
-// TODO: version that doesn't cache when `xs` is an iterable
 export function* cycle(xs) {
-    const cache = [];
-    for (const x of xs) {
-        cache.push(x);
-        yield x;
-    }
-    let i = 0;
+    let _xs = xs, xs2;
     while (true) {
-        yield cache[i];
-        i = (i + 1) % cache.length;
+        [_xs, xs2] = tee(_xs);
+        for (const x of xs2) yield x;
     }
 }
 
