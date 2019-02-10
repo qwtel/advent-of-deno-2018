@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, find, range, groupBy, mapValues, reduce } from './util.mjs';
+import { read, pipe, map, sum, range, groupBy, mapValues, max, maxBy } from './util.mjs';
 
 (async () => {
     const input = await read(process.stdin);
@@ -25,7 +25,7 @@ import { read, pipe, find, range, groupBy, mapValues, reduce } from './util.mjs'
         return { type: 'begins', guard: Number(guard) };
     }
 
-    const data = input
+    const [, sleepLog] = input
         .trim()
         .split('\n')
         .sort()
@@ -33,76 +33,74 @@ import { read, pipe, find, range, groupBy, mapValues, reduce } from './util.mjs'
         .map(([dateStr, typeStr]) => ({
             ...parseDate(dateStr),
             ...parseType(typeStr)
-        }));
-
-    const timeTable = new Map();
-    let curr, start;
-    for (const d of data) {
-        const { type, guard, date: [, , , hour, minute] } = d;
-        switch (type) {
-            case 'begins': {
-                curr = guard;
-                break;
-            }
-            case 'asleep': {
-                d.guard = curr; // HACK
-                if (hour !== 0) start = 0;
-                else start = minute;
-                break;
-            }
-            case 'wakeup': {
-                d.guard = curr; // HACK
-                const timeAsleep = minute - start;
-                timeTable.set(curr, timeAsleep + (timeTable.get(curr) || 0));
-            }
-        }
-    }
-
-    // console.log());
-    const maxV = Math.max(...timeTable.values());
-    const [maxSleepGuard] = pipe(timeTable, find(([_, v]) => v === maxV));
-    const maxSleepOnly = data.filter(({ guard }) => guard === maxSleepGuard);
-
-    function getSleepPlan(data) {
-        const sleepPlan = new Array(60).fill(0);
-        for (const d of data) {
-            const { type, date: [, , , hour, minute] } = d;
-            switch (type) {
+        }))
+        .reduce(([guard, log], entry) => {
+            switch (entry.type) {
+                case 'begins': {
+                    return [entry.guard, log];
+                }
                 case 'asleep': {
-                    if (hour !== 0) start = 0;
-                    else start = minute;
-                    break;
+                    const { date: [, , , hour, minute] } = entry;
+                    return [guard, log.concat({
+                        guard,
+                        start: hour !== 0 ? 0 : minute,
+                    })];
                 }
                 case 'wakeup': {
-                    // console.log(start, minute);
-                    for (const m of range(start, minute)) {
-                        sleepPlan[m] = 1 + (sleepPlan[m] || 0);
-                    }
+                    const prevEntry = log.pop();
+                    const { date: [, , , , minute] } = entry;
+                    return [guard, log.concat({
+                        ...prevEntry,
+                        end: minute,
+                    })];
                 }
+            }
+        }, [-1, []]);
+
+    const sleepLogByGuard = new Map(pipe(
+        sleepLog,
+        groupBy(({ guard }) => guard),
+    ));
+
+    function getSleepPlan(sleepLog) {
+        const sleepPlan = new Array(60).fill(0);
+        for (const entry of sleepLog) {
+            const { start, end } = entry;
+            for (const m of range(start, end)) {
+                sleepPlan[m] = 1 + (sleepPlan[m] || 0);
             }
         }
         return sleepPlan;
     }
 
-    const sleepPlan = getSleepPlan(maxSleepOnly)
-    const maxSleepTime = Math.max(...sleepPlan);
-    const maxSleepMin = sleepPlan.findIndex(x => x === maxSleepTime);
-    console.log(maxSleepGuard * maxSleepMin)
+    // 1
+    {
+        const [guard] = pipe(
+            sleepLogByGuard,
+            mapValues(log => pipe(
+                log, 
+                map(({ start, end }) => end - start), 
+                sum())),
+            maxBy(([, a], [, b]) => a - b)
+        );
+        const [maxSleepMin] = pipe(
+            sleepLogByGuard.get(guard),
+            getSleepPlan,
+            x => x.entries(),
+            maxBy(([, a], [, b]) => a - b),
+        );
+        console.log(guard * maxSleepMin)
+    }
 
     // 2
-    const best = pipe(
-        data,
-        groupBy(({ guard }) => guard),
-        mapValues(getSleepPlan),
-        reduce((best, [guard, sleepPlan]) => {
-            const maxV = Math.max(...sleepPlan);
-            if (maxV > best.maxV) {
-                const maxMin = sleepPlan.findIndex(x => x === maxV);
-                return { guard, maxV, maxMin };
-            }
-            return best;
-        }, { guard: null, maxV: 0 })
-    );
-    // console.log(x);
-    console.log(best.guard * best.maxMin);
+    {
+        const [guard, [maxSleepTime, sleepPlan]] = pipe(
+            sleepLogByGuard,
+            mapValues(getSleepPlan),
+            mapValues(sleepPlan => [pipe(sleepPlan, max()), sleepPlan]),
+            maxBy(([, [a]], [, [b]]) => a - b),
+        );
+        const maxSleepMin = sleepPlan.findIndex(x => x === maxSleepTime);
+        console.log(guard * maxSleepMin);
+    }
 })();

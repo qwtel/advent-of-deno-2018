@@ -261,36 +261,54 @@ export function length() {
     }
 }
 
-export function min(absMax = Number.POSITIVE_INFINITY, cf = (a, b) => a - b) {
+export function min() {
     return function (xs) {
-        let min = absMax;
+        let res = Number.POSITIVE_INFINITY;
         for (const x of xs) {
-            if (cf(x, min) < 0) min = x;
+            if (x < res) res = x;
         }
-        return min;
+        return res;
     }
 }
 
-export function max(absMin = Number.NEGATIVE_INFINITY, cf = (a, b) => a - b) {
+export function max() {
     return function (xs) {
-        let max = absMin;
+        let res = Number.NEGATIVE_INFINITY;
         for (const x of xs) {
-            if (cf(x, max) > 0) max = x;
+            if (x > res) res = x;
         }
-        return max;
+        return res;
     }
 }
 
-export function minMax([absMax, absMin] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY], cf = (a, b) => a - b) {
+export function minMax() {
     return function (xs) {
-        let min = absMax;
-        let max = absMin;
+        let min = Number.POSITIVE_INFINITY;
+        let max = Number.NEGATIVE_INFINITY;
         for (const x of xs) {
-            if (cf(x, min) < 0) min = x;
-            if (cf(x, max) > 0) max = x;
+            if (x < min) min = x;
+            if (x > max) max = x;
         }
         return [min, max];
     }
+}
+
+// TODO: faster implementation
+export function minBy(cf = (a, b) => a - b) {
+    return xs => [...xs].sort(cf)[0];
+}
+
+// TODO: faster implementation
+export function maxBy(cf = (a, b) => a - b) {
+    return xs => [...xs].sort(cf).pop();
+}
+
+// TODO: faster implementation
+export function minMaxBy(cf = (a, b) => a - b) {
+    return xs => {
+        const sorted = [...xs].sort(cf);
+        return [sorted[0], sorted.pop()];
+    };
 }
 
 export function sum(zero = 0) {
@@ -301,11 +319,11 @@ export function sum(zero = 0) {
     }
 }
 
-export function fillGaps(vs, gapValues = [undefined]) {
+export function replaceWhen(pf, ys) {
     return function* (xs) {
-        for (const [x, v] of zip(xs, vs)) {
-            if (!gapValues.includes(x)) yield x;
-            else yield v;
+        for (const [x, y] of zip(xs, ys)) {
+            if (!pf(x)) yield x;
+            else yield y;
         }
     }
 }
@@ -556,7 +574,7 @@ export function args(flags, defaults) {
         map(flag => process.argv.findIndex(arg => arg === flag)),
         map(i => process.argv[i + 1]),
         map(Number),
-        fillGaps(defaults, [NaN]),
+        replaceWhen(x => x === NaN, defaults),
     );
 }
 
