@@ -10,21 +10,20 @@ export function pipe(x, ...fs) {
     return res;
 }
 
-export function some(p) {
-    return function (xs) {
-        for (const x of xs) {
-            if (p(x)) return true;
-        }
-        return false;
+// OPERATORS
+
+export function map(f) {
+    return function* (xs) {
+        for (const x of xs) yield f(x);
     }
 }
 
-export function every(p) {
-    return function (xs) {
+export function tap(f) {
+    return function* (xs) {
         for (const x of xs) {
-            if (!p(x)) return false;
+            f(x);
+            yield x;
         }
-        return true;
     }
 }
 
@@ -48,18 +47,21 @@ export function scan(f, init) {
     }
 }
 
-export function map(f) {
-    return function* (xs) {
-        for (const x of xs) yield f(x);
+export function some(p) {
+    return function (xs) {
+        for (const x of xs) {
+            if (p(x)) return true;
+        }
+        return false;
     }
 }
 
-export function tap(f) {
-    return function* (xs) {
+export function every(p) {
+    return function (xs) {
         for (const x of xs) {
-            f(x);
-            yield x;
+            if (!p(x)) return false;
         }
+        return true;
     }
 }
 
@@ -78,84 +80,6 @@ export function partition(p) {
         return [
             filter(p)(xs1),
             filter(x => !p(x))(xs2),
-        ];
-    }
-}
-
-export function frequencies(iterable) {
-    const fs = new Map();
-    for (const item of iterable) {
-        fs.set(item, 1 + (fs.get(item) || 0));
-    }
-    return fs;
-}
-
-export function* concat(...xss) {
-    for (xs of xss)
-        for (const x of xs) yield x;
-}
-
-export function concatWith(ys) {
-    return function (xs) {
-        return concat(xs, ys);
-    }
-}
-
-export function* zip(...xss) {
-    const its = xss.map(xs => xs[Symbol.iterator]());
-    while (true) {
-        const rs = its.map(it => it.next());
-        if (rs.some(r => r.done)) break;
-        yield rs.map(r => r.value);
-    }
-}
-
-export function* zipOuter(...xss) {
-    const its = xss.map(xs => xs[Symbol.iterator]());
-    while (true) {
-        const rs = its.map(it => it.next());
-        if (rs.every(r => r.done)) break;
-        yield rs.map(r => r.value);
-    }
-}
-
-export function zipWith1(ys) {
-    return function* (xs) {
-        const it = ys[Symbol.iterator]();
-        for (const x of xs) {
-            yield [x, it.next().value];
-        }
-    };
-}
-
-export function zipWith(...yss) {
-    return function* (xs) {
-        const its = yss.map(ys => ys[Symbol.iterator]());
-        for (const x of xs) {
-            yield [x, ...its.map(it => it.next().value)];
-        }
-    };
-}
-
-// TODO: generalized unzip function that peeks the first element (or takes length arg)
-export function unzip2() {
-    return function (xs) {
-        const [xs1, xs2] = tee(xs);
-        return [
-            pluck(0)(xs1),
-            pluck(1)(xs2),
-        ];
-    }
-}
-
-export function unzip3() {
-    return function (xs) {
-        const [xs1, _xs] = tee(xs);
-        const [xs2, xs3] = tee(_xs);
-        return [
-            pluck(0)(xs1),
-            pluck(1)(xs2),
-            pluck(2)(xs3),
         ];
     }
 }
@@ -191,52 +115,77 @@ export function splitAt(n) {
     };
 }
 
-// https://stackoverflow.com/a/46416353/870615
-export function tee(iterable) {
-    const source = iterable[Symbol.iterator]();
-    const buffers = [[], []];
-    const DONE = Symbol('done');
-
-    const next = i => {
-        if (buffers[i].length) return buffers[i].shift();
-        const x = source.next();
-        if (x.done) return DONE;
-        buffers[1 - i].push(x.value);
-        return x.value;
-    };
-
-    return buffers.map(function* (_, i) {
-        while (true) {
-            const x = next(i);
-            if (x === DONE) break;
-            yield x;
+export function find(p) {
+    return function (xs) {
+        for (const x of xs) {
+            if (p(x)) return x;
         }
-    });
-}
-
-// TODO: generalize to n parameters
-export function* product(as, bs) {
-    let _bs = bs, bs2;
-    for (const a of as) {
-        // TODO: only tee when bs is an iterator!?
-        [_bs, bs2] = tee(_bs);
-        for (const b of bs2) {
-            yield [a, b];
-        }
+        return null;
     }
 }
 
-// TODO: generalize to n parameters
-// TODO: other name (look at python itertools?)
-export function* combinations(as, bs) {
-    let _bs = bs, bs2;
-    let i = 1;
-    for (const a of as) {
-        // TODO: only tee when bs is an iterator!?
-        [_bs, bs2] = tee(_bs);
-        for (const b of skip(i++)(bs2)) {
-            yield [a, b];
+export function findIndex(p) {
+    return function (xs) {
+        let i = 0;
+        for (const x of xs) {
+            if (p(x)) return i;
+            i++;
         }
+        return -1;
+    }
+}
+
+export function concatWith1(ys) {
+    return function (xs) {
+        return concat(xs, ys);
+    }
+}
+
+export function concatWith(...yss) {
+    return function (xs) {
+        return concat(xs, ...yss);
+    };
+}
+
+export function zipWith1(ys) {
+    return function* (xs) {
+        const it = ys[Symbol.iterator]();
+        for (const x of xs) {
+            yield [x, it.next().value];
+        }
+    };
+}
+
+export function zipWith(...yss) {
+    return function* (xs) {
+        const its = yss.map(ys => ys[Symbol.iterator]());
+        for (const x of xs) {
+            yield [x, ...its.map(it => it.next().value)];
+        }
+    };
+}
+
+// TODO: generalized unzip function that peeks the first element (or takes length arg)
+export function unzip2() {
+    return function (xs) {
+        const [xs1, xs2] = tee(xs);
+        return [
+            pluck(0)(xs1),
+            pluck(1)(xs2),
+        ];
+    }
+}
+
+export function unzip3() {
+    return function (xs) {
+        // TODO: generalized tee for arbitrary n
+        const [xs1, _xs] = tee(xs);
+        const [xs2, xs3] = tee(_xs);
+        return [
+            pluck(0)(xs1),
+            pluck(1)(xs2),
+            pluck(2)(xs3),
+        ];
     }
 }
 
@@ -246,10 +195,6 @@ export function pluck(key) {
             yield x[key];
         }
     }
-}
-
-export function* range(start = 0, end = Number.MAX_SAFE_INTEGER, step = 1) {
-    for (let i = start; i < end; i += step) yield i;
 }
 
 export function groupBy(f) {
@@ -276,42 +221,6 @@ export function mapValues(f) {
     }
 }
 
-export function find(p) {
-    return function (xs) {
-        for (const x of xs) {
-            if (p(x)) return x;
-        }
-        return null;
-    }
-}
-
-
-export function findIndex(p) {
-    return function (xs) {
-        let i = 0;
-        for (const x of xs) {
-            if (p(x)) return i;
-            i++;
-        }
-        return -1;
-    }
-}
-
-export function arrayCompare(as, bs) {
-    const res = as[0] - bs[0];
-    if (res === 0 && as.length > 1) {
-        return arrayCompare(as.slice(1), bs.slice(1));
-    } else {
-        return res;
-    }
-}
-
-export function* entries(obj) {
-    for (const key in obj) {
-        yield [key, obj[key]];
-    }
-}
-
 export function pairwise() {
     return function* (xs) {
         const it = xs[Symbol.iterator]();
@@ -323,75 +232,6 @@ export function pairwise() {
     }
 }
 
-export function* enumerate(xs) {
-    let i = 0;
-    for (const x of xs) {
-        yield [i++, x];
-    }
-}
-
-export function transpose(m) {
-    return m[0].map((_, i) => m.map(x => x[i]));
-}
-
-export function flatten(arr) {
-    return arr.reduce((a, x) => a.concat(x), []);
-}
-
-export function* walk2D(arr2D) {
-    for (const row of arr2D)
-        for (const cell of row)
-            yield cell;
-}
-
-export function map2D(arr2D, f) {
-    return arr2D.map(row => row.map(f));
-}
-
-// function deleteAll(A, B) {
-//     for (const b of B) A.delete(b);
-//     return A;
-// }
-
-export function subtract(A, B) {
-    const C = new Set(A);
-    for (const b of B) C.delete(b);
-    return C;
-}
-
-export function union(A, B) {
-    return new Set(concat(A, B));
-}
-
-export function pad(p, char = '0') {
-    return n => (new Array(p).fill(char).join('') + n).slice(-p);
-}
-
-export function findAndRemove(arr, f) {
-    const i = arr.findIndex(f);
-    return i === -1
-        ? null
-        : arr.splice(i, 1)[0];
-}
-
-export function* cycle(xs) {
-    const cache = [];
-    for (const x of xs) {
-        cache.push(x);
-        yield x;
-    }
-    let i = 0;
-    while (true) {
-        yield cache[i];
-        i = (i + 1) % cache.length;
-    }
-}
-
-// function makeOutOfBounds([[minX, minY], [maxX, maxY]]) {
-//     return ([x, y]) => x < minX || x >= maxX || y < minY || y >= maxY;
-// }
-
-
 export function length() {
     return function (xs) {
         let c = 0;
@@ -399,7 +239,6 @@ export function length() {
         return c;
     }
 }
-
 
 export function min(absMax = Number.POSITIVE_INFINITY, cf = (a, b) => a - b) {
     return function (xs) {
@@ -433,17 +272,270 @@ export function minMax([absMax, absMin] = [Number.POSITIVE_INFINITY, Number.NEGA
     }
 }
 
-export function sum(zero = 0, add = (a, b) => a + b) {
+export function sum(zero = 0) {
     return function (xs) {
         let res = zero;
-        for (const x of xs) {
-            res = add(res, x);
-        }
+        for (const x of xs) res += x;
         return res;
     }
 }
 
-// TODO: make "async utils"??
+export function fillGaps(vs, gapValues = [undefined]) {
+    return function* (xs) {
+        for (const [x, v] of zip(xs, vs)) {
+            if (!gapValues.includes(x)) yield x;
+            else yield v;
+        }
+    }
+}
+
+export function grouped(n) {
+    return function* (xs) {
+        let group = [];
+        for (const x of xs) {
+            group.push(x);
+            if (group.length === n) {
+                yield group;
+                group = [];
+            }
+        }
+    }
+}
+
+export function interleaveWith1(ys) {
+    return function (xs) {
+        return interleave2(xs, ys);
+    }
+}
+
+export function interleaveWith(...yss) {
+    return function (xs) {
+        return interleave(xs, ...yss);
+    }
+}
+
+
+// NOT OPERATORS
+
+export function* range(start = 0, end = Number.MAX_SAFE_INTEGER, step = 1) {
+    for (let i = start; i < end; i += step) yield i;
+}
+
+// TODO: rename to `entries`?
+export function* enumerate(xs) {
+    let i = 0;
+    for (const x of xs) {
+        yield [i++, x];
+    }
+}
+
+export function* concat(...xss) {
+    for (xs of xss)
+        for (const x of xs) yield x;
+}
+
+export function* zip(...xss) {
+    const its = xss.map(xs => xs[Symbol.iterator]());
+    while (true) {
+        const rs = its.map(it => it.next());
+        if (rs.some(r => r.done)) break;
+        yield rs.map(r => r.value);
+    }
+}
+
+// TODO: rename? Is this how regular zip commonly works?
+export function* zipOuter(...xss) {
+    const its = xss.map(xs => xs[Symbol.iterator]());
+    while (true) {
+        const rs = its.map(it => it.next());
+        if (rs.every(r => r.done)) break;
+        yield rs.map(r => r.value);
+    }
+}
+
+// TODO: generalize to n parameters
+export function* product(as, bs) {
+    let _bs = bs, bs2;
+    for (const a of as) {
+        // TODO: only tee when bs is an iterator!?
+        [_bs, bs2] = tee(_bs);
+        for (const b of bs2) {
+            yield [a, b];
+        }
+    }
+}
+
+// TODO: generalize to n parameters
+// TODO: other name (look at python itertools?)
+export function* combinations(as, bs) {
+    let _bs = bs, bs2;
+    let i = 1;
+    for (const a of as) {
+        // TODO: only tee when bs is an iterator!?
+        [_bs, bs2] = tee(_bs);
+        for (const b of skip(i++)(bs2)) {
+            yield [a, b];
+        }
+    }
+}
+
+export function* constantly(value) {
+    while (true) yield value;
+}
+
+// TODO: version that doesn't cache when `xs` is an iterable
+export function* cycle(xs) {
+    const cache = [];
+    for (const x of xs) {
+        cache.push(x);
+        yield x;
+    }
+    let i = 0;
+    while (true) {
+        yield cache[i];
+        i = (i + 1) % cache.length;
+    }
+}
+
+// TODO: Implementation that pulls values one at a time instead of usign zip
+export function* interleave2(xs, ys) {
+    for (const [x, y] of zip(xs, ys)) {
+        yield x;
+        yield y;
+    }
+}
+
+// TODO: Implementation that pulls values one at a time instead of usign zip
+export function* interleave(...xss) {
+    for (const xs of zip(...xss))
+        for (const x of xs)
+            yield x;
+}
+
+
+// HELPERS
+
+// By convention, an iterator returns `this` when calling `Symbol.iterator`
+function isIterator(xs) {
+    return xs[Symbol.iterator]() === xs;
+}
+
+// https://stackoverflow.com/a/46416353/870615
+function tee(iterable) {
+    const source = iterable[Symbol.iterator]();
+    const buffers = [[], []];
+    const DONE = Symbol('done');
+
+    const next = i => {
+        if (buffers[i].length) return buffers[i].shift();
+        const x = source.next();
+        if (x.done) return DONE;
+        buffers[1 - i].push(x.value);
+        return x.value;
+    };
+
+    return buffers.map(function* (_, i) {
+        while (true) {
+            const x = next(i);
+            if (x === DONE) break;
+            yield x;
+        }
+    });
+}
+
+
+// OTHER STUFF
+
+export function frequencies(iterable) {
+    const fs = new Map();
+    for (const item of iterable) {
+        fs.set(item, 1 + (fs.get(item) || 0));
+    }
+    return fs;
+}
+
+export function findAndRemove(arr, f) {
+    const i = arr.findIndex(f);
+    return i === -1
+        ? null
+        : arr.splice(i, 1)[0];
+}
+
+export function pad(p, char = '0') {
+    return n => (new Array(p).fill(char).join('') + n).slice(-p);
+}
+
+export function transpose(m) {
+    return m[0].map((_, i) => m.map(x => x[i]));
+}
+
+export function flatten(arr) {
+    return arr.reduce((a, x) => a.concat(x), []);
+}
+
+export function* walk2D(arr2D) {
+    for (const row of arr2D)
+        for (const cell of row)
+            yield cell;
+}
+
+export function map2D(arr2D, f) {
+    return arr2D.map(row => row.map(f));
+}
+
+export function arrayCompare(as, bs) {
+    const res = as[0] - bs[0];
+    if (res === 0 && as.length > 1) {
+        return arrayCompare(as.slice(1), bs.slice(1));
+    } else {
+        return res;
+    }
+}
+
+
+// SET OPERATIONS
+
+export function subtract(A, B) {
+    const _B = B instanceof Set ? B : new Set(B);
+    return new Set(filter(a => !_B.has(a))(A));
+}
+
+export function intersect(A, B) {
+    const _B = B instanceof Set ? B : new Set(B);
+    return new Set(filter(a => _B.has(a))(A));
+}
+
+export function union(A, B) {
+    return new Set(concat(A, B));
+}
+
+// export function deleteAll(A, B) {
+//     for (const b of B) A.delete(b);
+//     return A;
+// }
+
+
+// VERY SPECIFIC
+
+export async function read(stream) {
+    let buffer = Buffer.alloc(0);
+    for await (const chunk of stream) {
+        buffer = Buffer.concat([buffer, chunk]);
+    }
+    return buffer.toString('utf8');
+}
+
+export function args(flags, defaults) {
+    return pipe(
+        flags,
+        map(flag => process.argv.findIndex(arg => arg === flag)),
+        map(i => process.argv[i + 1]),
+        map(Number),
+        fillGaps(defaults, [NaN]),
+    );
+}
+
+// TODO: make "async utils"
 
 // export function asyncReduce(f, init) {
 //     return async function (xs) {
@@ -463,72 +555,3 @@ export function sum(zero = 0, add = (a, b) => a + b) {
 //         }
 //     }
 // }
-
-export async function read(stream) {
-    let buffer = Buffer.alloc(0);
-    for await (const chunk of stream) {
-        buffer = Buffer.concat([buffer, chunk]);
-    }
-    return buffer.toString('utf8');
-}
-
-export function fillGaps(vs, gapValues = [undefined]) {
-    return function* (xs) {
-        for (const [x, v] of zip(xs, vs)) {
-            if (!gapValues.includes(x)) yield x;
-            else yield v;
-        }
-    }
-}
-
-export function* constantly(value) {
-    while (true) yield value;
-}
-
-export function grouped(n) {
-    return function* (xs) {
-        let group = [];
-        for (const x of xs) {
-            group.push(x);
-            if (group.length === n) {
-                yield group;
-                group = [];
-            }
-        }
-    }
-}
-
-export function* interleave2(xs, ys) {
-    for (const [x, y] of zip(xs, ys)) {
-        yield x;
-        yield y;
-    }
-}
-
-export function* interleave(...xss) {
-    for (const xs of zip(...xss))
-        for (const x of xs)
-            yield x;
-}
-
-export function interleaveWith1(ys) {
-    return function (xs) {
-        return interleave2(xs, ys);
-    }
-}
-
-export function interleaveWith(...yss) {
-    return function (xs) {
-        return interleave(xs, ...yss);
-    }
-}
-
-export function args(flags, defaults) {
-    return pipe(
-        flags,
-        map(flag => process.argv.findIndex(arg => arg === flag)),
-        map(i => process.argv[i + 1]),
-        map(Number),
-        fillGaps(defaults, [NaN]),
-    );
-}
