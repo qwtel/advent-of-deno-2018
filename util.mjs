@@ -427,6 +427,14 @@ export function* cycle(xs) {
     }
 }
 
+export function* repeat(xs, n) {
+    let _xs = xs, xs2;
+    for (let i = 0; i < n; i++) {
+        [_xs, xs2] = tee(_xs);
+        for (const x of xs2) yield x;
+    }
+}
+
 export function* interleave2(xs, ys) {
     const itx = xs[Symbol.iterator]();
     const ity = ys[Symbol.iterator]();
