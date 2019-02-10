@@ -525,24 +525,19 @@ function getIn(keys) {
 
 // SET OPERATIONS
 
-export function subtract(A, B) {
-    const _B = B instanceof Set ? B : new Set(B);
-    return new Set(filter(a => !_B.has(a))(A));
+export function union(...as) {
+    return new Set(concat(...as));
 }
 
-export function intersect(A, B) {
-    const _B = B instanceof Set ? B : new Set(B);
-    return new Set(filter(a => _B.has(a))(A));
+export function subtract(as, ...bss) {
+    const Bs = bss.map(bs => bs instanceof Set ? bs : new Set(bs));
+    return new Set(filter(a => Bs.every(B => !B.has(a)))(as));
 }
 
-export function union(A, B) {
-    return new Set(concat(A, B));
+export function intersect(as, ...bss) {
+    const Bs = bss.map(bs => bs instanceof Set ? bs : new Set(bs));
+    return new Set(filter(a => Bs.every(B => B.has(a)))(as));
 }
-
-// export function deleteAll(A, B) {
-//     for (const b of B) A.delete(b);
-//     return A;
-// }
 
 
 // VERY SPECIFIC
