@@ -34,7 +34,7 @@ import { read, range, pluck, max, product, pipe, filter, length, every, Array2D 
     // 2
     function solve2() {
         for (const { id, x, y, w, h } of claims) {
-            const coords = iproduct(range(x, x + w), range(y, y + h));
+            const coords = product(range(x, x + w), range(y, y + h));
             if (pipe(coords, every(p => field.get(p) === 1))) {
                 return id;
             }
