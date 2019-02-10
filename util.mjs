@@ -197,6 +197,19 @@ export function pluck(key) {
     }
 }
 
+// like pluck, but accepts an iterable of keys
+export function select(keys) {
+    return function* (xs) {
+        for (const x of xs) {
+            let r = x;
+            for (const k of keys) {
+                r = r != null ? r[k] : undefined;
+            }
+            yield r
+        }
+    }
+}
+
 export function groupBy(f) {
     return function (xs) {
         const res = new Map();
@@ -208,6 +221,14 @@ export function groupBy(f) {
         return res;
     }
 }
+
+export function groupByKey(key) {
+    return groupBy(x => x[key]);
+}
+
+// export function groupByPath(keys) {
+//     return groupBy(x => getIn(keys)(x));
+// }
 
 export function mapKeys(f) {
     return function* (xs) {
@@ -492,6 +513,15 @@ export function arrayCompare(as, bs) {
     }
 }
 
+function getIn(keys) {
+    return (x) => {
+        let r = x;
+        for (const k of keys) {
+            r = r != null ? r[k] : undefined;
+        }
+        return r;
+    }
+}
 
 // SET OPERATIONS
 
