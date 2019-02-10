@@ -8,12 +8,12 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util.m
     // Usage: ./6.mjs -m 32
     const [MAX] = args(['-m'], [10000]);
 
-    const points = input.trim().split('\n').map(s => s.split(', ').map(Number));
+    const bodies = input.trim().split('\n').map(s => s.split(', ').map(Number));
     // console.log(points);
 
     // console.time('solve');
-    const maxX = 1 + pipe(points, pluck(0), max());
-    const maxY = 1 + pipe(points, pluck(1), max());
+    const maxX = 1 + pipe(bodies, pluck(0), max());
+    const maxY = 1 + pipe(bodies, pluck(1), max());
     const field = new Array2D([[0, 0], [maxX, maxY]]);
 
     // yield all coordinates of manhatten distance `d` around point `(x, y)`
@@ -34,9 +34,9 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util.m
         // break if no more empty cells within the field
         if (counter === size) break;
 
-        for (const [index, point] of points.entries()) {
+        for (const [index, body] of bodies.entries()) {
             // get all points of manhatten distance `dist` from `point`
-            for (const p of manhatten(dist, point)) {
+            for (const p of manhatten(dist, body)) {
                 if (field.isOutside(p)) continue;
 
                 const cell = field.get(p);
@@ -65,34 +65,48 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util.m
         }
     }
     const res = pipe(counts.values(), max());
+
+    if (process.env.DEBUG) {
+        const fieldRepr = field.map(({ index: i, dist }) => {
+            if (dist === 0) return String.fromCharCode(i + 65);
+            return i >= 0 ? String.fromCharCode(i + 65 + 32) : '.';
+        });
+
+        for (const row of fieldRepr.columns()) {
+          console.log(row.join(''))
+        }
+    }
+
     console.log(res);
 
     // 2
     const manhattenDist = ([ax, ay], [bx, by]) => Math.abs(ax - bx) + Math.abs(ay - by);
 
     const region = [];
-    for (const [x, y] of field2.coords()) {
+    for (const coord of field2.coords()) {
         let total = 0;
-        for (const point of points) {
-            total += manhattenDist([x, y], point)
+        for (const body of bodies) {
+            total += manhattenDist(coord, body)
             if (total >= MAX) break;
         }
-        // console.log(total);
-        if (total < MAX) region.push([x, y]);
+        if (total < MAX) region.push(coord);
     }
+
+    if (process.env.DEBUG) {
+        const fieldRepr = field.map(({ index: i, dist }) => {
+            if (dist === 0) return String.fromCharCode(i + 65);
+            return '.'
+        });
+
+        for (const p of region) {
+            if (fieldRepr.get(p) === '.') fieldRepr.set(p, '#');
+        }
+
+        for (const row of fieldRepr.columns()) {
+          console.log(row.join(''))
+        }
+    }
+
     console.log(region.length);
 
-    // const fieldRepr = map2D(field, ({ index: i, dist }) => {
-    //   if (dist === 0) return String.fromCharCode(i + 65);
-    // //   return i >= 0 ? String.fromCharCode(i + 65 + 32) : '.';
-    //     return '.'
-    // });
-
-    // for (const [x, y] of region) {
-    //     if (fieldRepr[x][y] === '.') fieldRepr[x][y] = '#';
-    // }
-
-    // for (const row of transpose(fieldRepr)) {
-    //   console.log(row.join(''))
-    // }
 })();
