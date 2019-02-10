@@ -178,7 +178,6 @@ export function unzip2() {
 
 export function unzip3() {
     return function (xs) {
-        // TODO: generalized tee for arbitrary n
         const [xs1, _xs] = tee(xs);
         const [xs2, xs3] = tee(_xs);
         return [
@@ -396,7 +395,6 @@ export function* zipOuter(...xss) {
 export function* product(as, bs) {
     let _bs = bs, bs2;
     for (const a of as) {
-        // TODO: only tee when bs is an iterator!?
         [_bs, bs2] = tee(_bs);
         for (const b of bs2) {
             yield [a, b];
@@ -410,7 +408,6 @@ export function* combinations(as, bs) {
     let _bs = bs, bs2;
     let i = 1;
     for (const a of as) {
-        // TODO: only tee when bs is an iterator!?
         [_bs, bs2] = tee(_bs);
         for (const b of skip(i++)(bs2)) {
             yield [a, b];
@@ -454,14 +451,21 @@ export function* interleave(...xss) {
 
 // HELPERS
 
-// By convention, an iterator returns `this` when calling `Symbol.iterator`
 function isIterator(xs) {
+    // By convention, an iterator returns itself when calling `Symbol.iterator`.
     return xs[Symbol.iterator]() === xs;
 }
 
 // https://stackoverflow.com/a/46416353/870615
-function tee(iterable) {
-    const source = iterable[Symbol.iterator]();
+function tee(it) {
+    // If `it` is not an iterator, i.e. can be traversed more than once, 
+    // we just return it unmodified.
+    if (!isIterator(it)) {
+        console.log('not an iterator');
+        return [it, it];
+    }
+
+    const source = it[Symbol.iterator]();
     const buffers = [[], []];
     const DONE = Symbol('done');
 
