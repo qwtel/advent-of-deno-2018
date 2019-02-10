@@ -524,8 +524,8 @@ export function transpose(m) {
     return m[0].map((_, i) => m.map(x => x[i]));
 }
 
-export function flatten(arr) {
-    return arr.reduce((a, x) => a.concat(x), []);
+export function flatten(as) {
+    return as.reduce((res, a) => (res.push(...a), res), [])
 }
 
 export function* walk2D(arr2D) {
