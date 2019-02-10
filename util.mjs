@@ -165,7 +165,6 @@ export function zipWith(...yss) {
     };
 }
 
-// TODO: generalized unzip function that peeks the first element (or takes length arg)
 export function unzip2() {
     return function (xs) {
         const [xs1, xs2] = tee(xs);
@@ -176,15 +175,10 @@ export function unzip2() {
     }
 }
 
-export function unzip3() {
+export function unzip(n = 2) {
     return function (xs) {
-        const [xs1, _xs] = tee(xs);
-        const [xs2, xs3] = tee(_xs);
-        return [
-            pluck(0)(xs1),
-            pluck(1)(xs2),
-            pluck(2)(xs3),
-        ];
+        const xss = teeN(xs, n);
+        return xss.map((xs, i) => pluck(i)(xs));
     }
 }
 
@@ -353,7 +347,7 @@ export function interleaveWith(...yss) {
 }
 
 export function sort(cf) {
-    return function*(xs) {
+    return function* (xs) {
         for (const x of [...xs].sort(cf)) yield x;
     }
 }
@@ -433,19 +427,28 @@ export function* cycle(xs) {
     }
 }
 
-// TODO: Implementation that pulls values one at a time instead of usign zip
 export function* interleave2(xs, ys) {
-    for (const [x, y] of zip(xs, ys)) {
-        yield x;
-        yield y;
+    const itx = xs[Symbol.iterator]();
+    const ity = ys[Symbol.iterator]();
+    while (true) {
+        const rx = itx.next();
+        if (rx.done) break;
+        else yield rx.value;
+        const ry = ity.next();
+        if (ry.done) break;
+        else yield ry.value;
     }
 }
 
-// TODO: Implementation that pulls values one at a time instead of usign zip
 export function* interleave(...xss) {
-    for (const xs of zip(...xss))
-        for (const x of xs)
-            yield x;
+    const its = xss.map(xs => xs[Symbol.iterator]());
+    outerloop: while (true) { // Throwback to the 90s
+        for (const it of its) {
+            const { done, value } = it.next();
+            if (done) break outerloop; // Yup, this just happened
+            else yield value;
+        }
+    }
 }
 
 
@@ -481,6 +484,18 @@ function tee(it) {
             yield x;
         }
     });
+}
+
+// TODO: more performant impl?
+function teeN(it, n = 2) {
+    const res = [];
+    let orig = it, copy;
+    for (let i = 0; i < n - 1; i++) {
+        [orig, copy] = tee(orig);
+        res.push(copy);
+    }
+    res.push(orig);
+    return res;
 }
 
 
@@ -532,7 +547,7 @@ export function arrayCompare(as, bs) {
     }
 }
 
-function getIn(keys) {
+export function getIn(keys) {
     return (x) => {
         let r = x;
         for (const k of keys) {
