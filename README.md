@@ -6,7 +6,7 @@ JavaScript solutions for [Advent of Code 2018][AoC] using the latest ECMAScript 
 ## Run
 Requires node 11+. Input via `stdin`, e.g. 
 
-    cat input/1.txt | ./01.mjs
+    cat input/01.txt | ./01.mjs
 
 `.mjs` files are exectutable to avoid having to type `node --experimental-modules` over and over again.
 
@@ -49,3 +49,7 @@ while (true) {
 Why is the first solution "better"? It's really a matter of taste, but personally I prefer the fact that each idea is expressed separately. I.e. the cycling of the input is one line instead of explicitly incrementing and wrapping and index, as is the lookup in the set, etc...
 
 Obviously the first implementation requires a variety of helper functions such as `pipe`, `scan`, `find`, etc. However, as a look at [`util.mjs`](./util.mjs) will show, they are suprisingly compact and easy to implement using generator functions.
+
+### Further Reading
+
+* [Solving Advent of Code Puzzeles with ES Generators](https://qwtel.com/posts/software/solving-advent-of-code-puzzeles-with-es-generators/)
