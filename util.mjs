@@ -377,16 +377,31 @@ export function replaceWhen(pf, ys) {
     }
 }
 
-export function grouped(n) {
+export function grouped(n, step = n) {
     return function* (xs) {
         let group = [];
         for (const x of xs) {
             group.push(x);
             if (group.length === n) {
-                yield group;
-                group = [];
+                yield [...group];
+                for (const _ of range(0, step)) group.shift();
             }
         }
+        // yield group; // ??
+    }
+}
+
+export function startWith(...as) {
+    return function* (xs) {
+        for (const a of as) yield a;
+        for (const x of xs) yield x;
+    }
+}
+
+export function endWith(...zs) {
+    return function* (xs) {
+        for (const x of xs) yield x;
+        for (const z of zs) yield z;
     }
 }
 
