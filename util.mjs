@@ -27,6 +27,14 @@ export function tap(f) {
     }
 }
 
+export function forEach(f) {
+    return function (xs) {
+        for (const x of xs) {
+            f(x);
+        }
+    }
+}
+
 export function reduce(f, init) {
     return function (xs) {
         let res = init;
@@ -288,19 +296,67 @@ export function minMax() {
 
 // TODO: faster implementation
 export function minBy(cf = (a, b) => a - b) {
-    return xs => [...xs].sort(cf)[0];
+    return function (xs) {
+        const it = xs[Symbol.iterator]();
+        const { done, value } = it.next();
+        if (done) return Number.POSITIVE_INFINITY;
+        let res = value;
+        for (const x of it) if (cf(x, res) < 0) res = x;
+        return res;
+    };
 }
 
 // TODO: faster implementation
 export function maxBy(cf = (a, b) => a - b) {
-    return xs => [...xs].sort(cf).pop();
+    return function (xs) {
+        const it = xs[Symbol.iterator]();
+        const { done, value } = it.next();
+        if (done) return Number.NEGATIVE_INFINITY;
+        let res = value;
+        for (const x of it) if (cf(x, res) > 0) res = x;
+        return res;
+    };
 }
 
 // TODO: faster implementation
 export function minMaxBy(cf = (a, b) => a - b) {
-    return xs => {
-        const sorted = [...xs].sort(cf);
-        return [sorted[0], sorted.pop()];
+    return function (xs) {
+        const it = xs[Symbol.iterator]();
+        const { done, value } = it.next();
+        if (done) return [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
+        let min = value;
+        let max = value;
+        for (const x of it) {
+            if (cf(x, min) < 0) min = x;
+            if (cf(x, max) > 0) max = x;
+        }
+        return [min, max];
+    };
+}
+
+export function minByScan(cf = (a, b) => a - b) {
+    return function* (xs) {
+        const it = xs[Symbol.iterator]();
+        const { done, value } = it.next();
+        if (done) yield Number.POSITIVE_INFINITY;
+        let res = value;
+        for (const x of it) if (cf(x, res) < 0) {
+            res = x; 
+            yield res;
+        }
+    };
+}
+
+export function maxByScan(cf = (a, b) => a - b) {
+    return function* (xs) {
+        const it = xs[Symbol.iterator]();
+        const { done, value } = it.next();
+        if (done) yield Number.NEGATIVE_INFINITY;
+        let res = value;
+        for (const x of it) if (cf(x, res) > 0) {
+            res = x; 
+            yield res;
+        }
     };
 }
 

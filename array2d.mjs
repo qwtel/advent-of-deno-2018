@@ -3,7 +3,16 @@ export class Array2D {
         const [[minX, minY], [maxX, maxY]] = this._bounds = bounds;
         const [diffX, diffY] = [maxX - minX, maxY - minY];
         this._array = new Array(diffX).fill(defaultValue).map(() => new Array(diffY).fill(defaultValue));
-        this._coordToIndex = ([x, y]) => [x - minX, y - minY];
+    }
+
+    _coordToIndex([x, y]) {
+        const [[minX, minY]] = this.bounds;
+        return [x - minX, y - minY];
+    }
+
+    _indexToCoord(i, j) {
+        const [[minX, minY]] = this.bounds;
+        return [i + minX, j + minY];
     }
 
     static of(arr2D, bounds = [[0, 0], [arr2D.length, arr2D[0].length]]) {
@@ -29,12 +38,12 @@ export class Array2D {
     }
 
     forEach(f) {
-        for (const x of this) f(x);
+        a._array = this._array.forEach((row, i) => row.forEach((x, j) => f(x, this._indexToCoord(i, j))));
     }
 
     map(f) {
         const a = new Array2D();
-        a._array = this._array.map(row => row.map(f));
+        a._array = this._array.map((row, i) => row.map((x, j) => f(x, this._indexToCoord(i, j))));
         a._bounds = this._bounds.map(([x, y]) => [x, y]);
         return a;
     }
