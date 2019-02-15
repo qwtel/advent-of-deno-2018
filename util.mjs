@@ -341,7 +341,7 @@ export function minByScan(cf = (a, b) => a - b) {
         if (done) yield Number.POSITIVE_INFINITY;
         let res = value;
         for (const x of it) if (cf(x, res) < 0) {
-            res = x; 
+            res = x;
             yield res;
         }
     };
@@ -354,7 +354,7 @@ export function maxByScan(cf = (a, b) => a - b) {
         if (done) yield Number.NEGATIVE_INFINITY;
         let res = value;
         for (const x of it) if (cf(x, res) > 0) {
-            res = x; 
+            res = x;
             yield res;
         }
     };
@@ -422,7 +422,6 @@ export function sort(cf) {
         for (const x of [...xs].sort(cf)) yield x;
     }
 }
-
 
 // NOT OPERATORS
 
@@ -593,6 +592,10 @@ export function findAndRemove(arr, f) {
     return i === -1
         ? null
         : arr.splice(i, 1)[0];
+}
+
+export function mod(a, n) {
+    return ((a % n) + n) % n
 }
 
 export function pad(p, char = '0') {

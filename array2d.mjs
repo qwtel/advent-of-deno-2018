@@ -2,7 +2,7 @@ export class Array2D {
     constructor(bounds = [[0, 0], [1, 1]], defaultValue = 0) {
         const [[minX, minY], [maxX, maxY]] = this._bounds = bounds;
         const [diffX, diffY] = [maxX - minX, maxY - minY];
-        this._array = new Array(diffX).fill(defaultValue).map(() => new Array(diffY).fill(defaultValue));
+        this._array = new Array(diffY).fill(defaultValue).map(() => new Array(diffX).fill(defaultValue));
     }
 
     _coordToIndex([x, y]) {
@@ -15,11 +15,11 @@ export class Array2D {
         return [i + minX, j + minY];
     }
 
-    static of(arr2D, bounds = [[0, 0], [arr2D.length, arr2D[0].length]]) {
+    static of(arr2D, bounds = [[0, 0], [arr2D[0].length, arr2D.length]]) {
         const a = new Array2D(bounds);
         for (const p of a.coords()) {
-            const [ix, iy] = a._coordToIndex(p)
-            a.set(p, arr2D[ix][iy])
+            const [ix, iy] = a._coordToIndex(p);
+            a.set(p, arr2D[iy][ix]);
         }
         return a;
     }
@@ -38,25 +38,30 @@ export class Array2D {
     }
 
     forEach(f) {
-        a._array = this._array.forEach((row, i) => row.forEach((x, j) => f(x, this._indexToCoord(i, j))));
+        a._array = this._array.forEach((row, iy) =>
+            row.forEach((x, ix) =>
+                f(x, this._indexToCoord(ix, iy), this)));
     }
 
     map(f) {
         const a = new Array2D();
-        a._array = this._array.map((row, i) => row.map((x, j) => f(x, this._indexToCoord(i, j))));
+        a._array = this._array.map((row, iy) =>
+            row.map((c, ix) =>
+                f(c, this._indexToCoord(ix, iy), this)));
         a._bounds = this._bounds.map(([x, y]) => [x, y]);
         return a;
     }
 
     set(point, value) {
-        const [x, y] = this._coordToIndex(point);
-        this._array[x][y] = value;
+        const [ix, iy] = this._coordToIndex(point);
+        this._array[iy][ix] = value;
         return this;
     }
 
     get(point) {
-        const [x, y] = this._coordToIndex(point);
-        return this._array[x][y];
+        const [ix, iy] = this._coordToIndex(point);
+        if (this.isOutside(point)) return undefined;
+        return this._array[iy][ix];
     }
 
     get size() {
@@ -64,11 +69,11 @@ export class Array2D {
     }
 
     get sizeX() {
-        return this._array.length;
+        return this._array[0].length;
     }
 
     get sizeY() {
-        return this._array[0].length;
+        return this._array.length;
     }
 
     get bounds() {
@@ -77,7 +82,7 @@ export class Array2D {
 
     transpose() {
         const a = new Array2D();
-        a._array = this._array[0].map((_, i) => this._array.map(x => x[i]));
+        a._array = this._array[0].map((_, i) => this._array.map(r => r[i]));
         a._bounds = this._bounds.map(([x, y]) => [y, x]);
         return a;
     }
@@ -133,5 +138,11 @@ export class Array2D {
     isOutside([x, y]) {
         const [[minX, minY], [maxX, maxY]] = this._bounds;
         return x < minX || x >= maxX || y < minY || y >= maxY;
+    }
+
+    toString() {
+        let s = ''
+        for (const r of this.rows()) s += r.join('') + '\n';
+        return s;
     }
 }
