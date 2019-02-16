@@ -13,7 +13,7 @@ import {
     filter,
     subtract,
     pad,
-} from './util.mjs';
+} from './util';
 
 (async () => {
     const input = await read(process.stdin);

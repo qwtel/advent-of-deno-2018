@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, Array2D, range, pipe, filter, map, arrayCompare, sort, pairwise, find, mod } from './util.mjs';
+import { read, Array2D, range, pipe, filter, map, arrayCompare, combinations, find, mod } from './util';
 
 (async () => {
     const input = await read(process.stdin);
@@ -191,12 +191,9 @@ import { read, Array2D, range, pipe, filter, map, arrayCompare, sort, pairwise, 
     }
 })();
 
-// There's quicker ways to find duplicates, but we don't care
 function findDuplicate(xs, cf = (a, b) => a - b) {
     return pipe(
-        xs,
-        sort(cf),
-        pairwise(),
+        combinations(xs, xs),
         find(([a, b]) => cf(a, b) === 0),
     );
 }

@@ -48,7 +48,7 @@ while (true) {
 
 Why is the first solution "better"? It's really a matter of taste, but personally I prefer the fact that each idea is expressed separately. I.e. the cycling of the input is one line instead of explicitly incrementing and wrapping and index, as is the lookup in the set, etc...
 
-Obviously the first implementation requires a variety of helper functions such as `pipe`, `scan`, `find`, etc. However, as a look at [`util.mjs`](./util.mjs) will show, they are suprisingly compact and easy to implement using generator functions.
+Obviously the first implementation requires a variety of helper functions such as `pipe`, `scan`, `find`, etc. However, as a look at [`util.mjs`](./util/iter.mjs) will show, they are suprisingly compact and easy to implement using generator functions.
 
 ### Further Reading
 

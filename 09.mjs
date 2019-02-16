@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, range, map } from './util.mjs';
+import { read, pipe, range, map, max, pad } from './util';
 
 (async () => {
     const input = await read(process.stdin);
@@ -27,24 +27,31 @@ import { read, pipe, range, map } from './util.mjs';
                 scores.set(p, scores.get(p) + turn + score);
 
                 c = ri;
-                if (c === circle.length) c = 0;
             } else {
                 c += 2;
                 if (c === circle.length + 1) c = 1;
                 circle.splice(c, 0, turn);
             }
 
-            // console.log(`[${p + 1}]`, circle
-            //     .map((x, i) => c === i ? `(${x})` : `${x} `)
-            //     .map(x => pad(4, ' ')(x)).join('')
-            // );
+            if (process.env.DEBUG) {
+                const pad4 = pad(4, ' ');
+                console.log(
+                    `[${p + 1}]`, circle
+                        .map((x, i) => c === i ? `(${x})` : `${x} `)
+                        .map(x => pad4(x)).join('')
+                );
+            }
 
             p = (p + 1) % numPlayers;
         }
         return scores;
     }
 
-    console.log(Math.max(...solve(numPlayers, lastRound).values()));
+    console.log(pipe(
+        solve(numPlayers, lastRound),
+        _ => _.values(),
+        max(),
+    ));
 
     // sloooooow
     // function solveImmutable(numPlayers, lastRound) {

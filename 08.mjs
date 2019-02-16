@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read } from './util.mjs';
+import { read, add } from './util';
 
 (async () => {
     const input = await read(process.stdin);
@@ -20,16 +20,17 @@ import { read } from './util.mjs';
 
     // 2
     function buildTree(it, c = 0) {
-        const letter = String.fromCharCode(c + 65);
+        const letter = process.env.DEBUG ? String.fromCharCode(c + 65) : null;
         const children = [];
         const meta = [];
         const [a, b] = [it.next().value, it.next().value];
         for (let i = 0; i < a; i++) children.push(buildTree(it, ++c));
         for (let j = 0; j < b; j++) meta.push(it.next().value);
-        return { letter, children, meta };
-    }
+        return process.env.DEBUG
+            ? { letter, children, meta }
+            : { children, meta };
 
-    const add = (a, b) => a + b;
+    }
 
     function countStuff({ children, meta }) {
         if (!children.length) return meta.reduce(add, 0);
@@ -41,7 +42,7 @@ import { read } from './util.mjs';
     }
 
     const tree = buildTree(treeInput[Symbol.iterator]());
-    // console.log(tree);
-    console.log(countStuff(tree));
+    if (process.env.DEBUG) console.log(tree);
 
+    console.log(countStuff(tree));
 })();

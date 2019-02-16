@@ -1,14 +1,12 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, reduce, cycle, scan, find } from './util.mjs';
+import { read, pipe, reduce, cycle, scan, find, add } from './util';
 
 (async () => {
     const input = (await read(process.stdin))
         .trim()
         .split('\n')
         .map(Number);
-
-    const add = (a, b) => a + b;
 
     // 1
     console.log(pipe(input, reduce(add, 0)));

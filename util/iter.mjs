@@ -1,14 +1,6 @@
-import { Array2D } from './array2d.mjs';
+import { pipe, tee, teeN } from './common.mjs';
 
-export { Array2D };
-
-export function pipe(x, ...fs) {
-    let res = x;
-    for (const f of fs) {
-        res = f(res);
-    }
-    return res;
-}
+export { pipe };
 
 // OPERATORS
 
@@ -27,6 +19,8 @@ export function tap(f) {
     }
 }
 
+export const inspect = tap;
+
 export function forEach(f) {
     return function (xs) {
         for (const x of xs) {
@@ -34,6 +28,8 @@ export function forEach(f) {
         }
     }
 }
+
+export const subscribe = forEach;
 
 export function reduce(f, init) {
     return function (xs) {
@@ -54,6 +50,8 @@ export function scan(f, init) {
         }
     }
 }
+
+export const reducutions = scan;
 
 export function some(p) {
     return function (xs) {
@@ -81,7 +79,6 @@ export function filter(p) {
     }
 }
 
-// TODO: rename?
 export function partition(p) {
     return function (xs) {
         const [xs1, xs2] = tee(xs);
@@ -227,10 +224,6 @@ export function groupByKey(key) {
     return groupBy(x => x[key]);
 }
 
-// export function groupByPath(keys) {
-//     return groupBy(x => getIn(keys)(x));
-// }
-
 export function mapKeys(f) {
     return function* (xs) {
         for (const [k, v] of xs) yield [f(k), v];
@@ -294,7 +287,6 @@ export function minMax() {
     }
 }
 
-// TODO: faster implementation
 export function minBy(cf = (a, b) => a - b) {
     return function (xs) {
         const it = xs[Symbol.iterator]();
@@ -306,7 +298,6 @@ export function minBy(cf = (a, b) => a - b) {
     };
 }
 
-// TODO: faster implementation
 export function maxBy(cf = (a, b) => a - b) {
     return function (xs) {
         const it = xs[Symbol.iterator]();
@@ -318,7 +309,6 @@ export function maxBy(cf = (a, b) => a - b) {
     };
 }
 
-// TODO: faster implementation
 export function minMaxBy(cf = (a, b) => a - b) {
     return function (xs) {
         const it = xs[Symbol.iterator]();
@@ -384,7 +374,7 @@ export function grouped(n, step = n) {
             group.push(x);
             if (group.length === n) {
                 yield [...group];
-                for (const _ of range(0, step)) group.shift();
+                for (let i = 0; i < step; i++) group.shift();
             }
         }
         // yield group; // ??
@@ -423,10 +413,11 @@ export function sort(cf) {
     }
 }
 
-// NOT OPERATORS
+
+// CONSTRUCTORS
 
 export function* range(start = 0, end = Number.MAX_SAFE_INTEGER, step = 1) {
-    for (let i = start; i < end; i += step) yield i;
+    for (let i = start; end > start ? i < end : i > end; i += step) yield i;
 }
 
 // TODO: rename to `entries`?
@@ -528,171 +519,3 @@ export function* interleave(...xss) {
         }
     }
 }
-
-
-// HELPERS
-
-function isIterator(xs) {
-    // By convention, an iterator returns itself when calling `Symbol.iterator`.
-    return xs[Symbol.iterator]() === xs;
-}
-
-// https://stackoverflow.com/a/46416353/870615
-function tee(it) {
-    // If `it` is not an iterator, i.e. can be traversed more than once, 
-    // we just return it unmodified.
-    if (!isIterator(it)) return [it, it];
-
-    const source = it[Symbol.iterator]();
-    const buffers = [[], []];
-    const DONE = Symbol('done');
-
-    const next = i => {
-        if (buffers[i].length) return buffers[i].shift();
-        const x = source.next();
-        if (x.done) return DONE;
-        buffers[1 - i].push(x.value);
-        return x.value;
-    };
-
-    return buffers.map(function* (_, i) {
-        while (true) {
-            const x = next(i);
-            if (x === DONE) break;
-            yield x;
-        }
-    });
-}
-
-// TODO: more performant impl?
-function teeN(it, n = 2) {
-    const res = [];
-    let orig = it, copy;
-    for (let i = 0; i < n - 1; i++) {
-        [orig, copy] = tee(orig);
-        res.push(copy);
-    }
-    res.push(orig);
-    return res;
-}
-
-
-// OTHER STUFF
-
-export function frequencies(iterable) {
-    const fs = new Map();
-    for (const item of iterable) {
-        fs.set(item, 1 + (fs.get(item) || 0));
-    }
-    return fs;
-}
-
-export function findAndRemove(arr, f) {
-    const i = arr.findIndex(f);
-    return i === -1
-        ? null
-        : arr.splice(i, 1)[0];
-}
-
-export function mod(a, n) {
-    return ((a % n) + n) % n
-}
-
-export function pad(p, char = '0') {
-    return n => (new Array(p).fill(char).join('') + n).slice(-p);
-}
-
-export function transpose(m) {
-    return m[0].map((_, i) => m.map(x => x[i]));
-}
-
-export function flatten(as) {
-    return as.reduce((res, a) => (res.push(...a), res), [])
-}
-
-export function* walk2D(arr2D) {
-    for (const row of arr2D)
-        for (const cell of row)
-            yield cell;
-}
-
-export function map2D(arr2D, f) {
-    return arr2D.map(row => row.map(f));
-}
-
-export function arrayCompare(as, bs) {
-    const res = as[0] - bs[0];
-    if (res === 0 && as.length > 1) {
-        return arrayCompare(as.slice(1), bs.slice(1));
-    } else {
-        return res;
-    }
-}
-
-export function getIn(keys) {
-    return (x) => {
-        let r = x;
-        for (const k of keys) {
-            r = r != null ? r[k] : undefined;
-        }
-        return r;
-    }
-}
-
-// SET OPERATIONS
-
-export function union(...as) {
-    return new Set(concat(...as));
-}
-
-export function subtract(as, ...bss) {
-    const Bs = bss.map(bs => bs instanceof Set ? bs : new Set(bs));
-    return new Set(filter(a => Bs.every(B => !B.has(a)))(as));
-}
-
-export function intersect(as, ...bss) {
-    const Bs = bss.map(bs => bs instanceof Set ? bs : new Set(bs));
-    return new Set(filter(a => Bs.every(B => B.has(a)))(as));
-}
-
-
-// VERY SPECIFIC
-
-export async function read(stream) {
-    let buffer = Buffer.alloc(0);
-    for await (const chunk of stream) {
-        buffer = Buffer.concat([buffer, chunk]);
-    }
-    return buffer.toString('utf8');
-}
-
-export function args(flags, defaults) {
-    return pipe(
-        flags,
-        map(flag => process.argv.findIndex(arg => arg === flag)),
-        map(i => process.argv[i + 1]),
-        map(Number),
-        replaceWhen(Number.isNaN, defaults),
-    );
-}
-
-// TODO: make "async utils"
-
-// export function asyncReduce(f, init) {
-//     return async function (xs) {
-//         let res = init;
-//         for await (const x of xs) {
-//             res = f(res, x);
-//         }
-//         return res;
-//     }
-// }
-
-// export function asyncTap(f) {
-//     return async function* (xs) {
-//         for await (const x of xs) {
-//             f(x);
-//             yield x;
-//         }
-//     }
-// }

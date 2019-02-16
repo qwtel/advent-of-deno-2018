@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, sort, map, reduce, sum, range, groupBy, mapValues, max, maxBy } from './util.mjs';
+import { read, pipe, sort, map, reduce, sum, range, groupBy, mapValues, max, maxBy } from './util';
 
 (async () => {
     const input = await read(process.stdin);

@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, range, pluck, max, product, pipe, filter, length, every, Array2D } from './util.mjs';
+import { read, range, pluck, max, product, pipe, filter, length, every, Array2D } from './util';
 
 (async () => {
     const input = await read(process.stdin);

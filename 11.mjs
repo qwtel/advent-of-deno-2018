@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, range, pipe, map, tap, forEach, filter, Array2D, sum, product, maxBy, maxByScan } from './util.mjs';
+import { read, range, pipe, map, tap, forEach, filter, Array2D, sum, product, maxBy, maxByScan } from './util';
 
 (async () => {
     const input = Number(await read(process.stdin));

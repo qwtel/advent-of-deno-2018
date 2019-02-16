@@ -1,4 +1,13 @@
 export class Array2D {
+    static of(arr2D, bounds = [[0, 0], [arr2D[0].length, arr2D.length]]) {
+        const a = new Array2D(bounds);
+        for (const p of a.coords()) {
+            const [ix, iy] = a._coordToIndex(p);
+            a.set(p, arr2D[iy][ix]);
+        }
+        return a;
+    }
+
     constructor(bounds = [[0, 0], [1, 1]], defaultValue = 0) {
         const [[minX, minY], [maxX, maxY]] = this._bounds = bounds;
         const [diffX, diffY] = [maxX - minX, maxY - minY];
@@ -13,15 +22,6 @@ export class Array2D {
     _indexToCoord(i, j) {
         const [[minX, minY]] = this.bounds;
         return [i + minX, j + minY];
-    }
-
-    static of(arr2D, bounds = [[0, 0], [arr2D[0].length, arr2D.length]]) {
-        const a = new Array2D(bounds);
-        for (const p of a.coords()) {
-            const [ix, iy] = a._coordToIndex(p);
-            a.set(p, arr2D[iy][ix]);
-        }
-        return a;
     }
 
     clone() {

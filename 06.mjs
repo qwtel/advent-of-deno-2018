@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util.mjs';
+import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util';
 
 (async () => {
     const input = await read(process.stdin);
@@ -102,9 +102,7 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util.m
             if (fieldRepr.get(p) === '.') fieldRepr.set(p, '#');
         }
 
-        for (const row of fieldRepr.columns()) {
-          console.log(row.join(''))
-        }
+        console.log(fieldRepr.toString());
     }
 
     console.log(region.length);

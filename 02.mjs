@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, some, sum, map, filter, reduce, frequencies, zip, combinations, find, unzip2 } from './util.mjs';
+import { read, pipe, some, sum, map, filter, reduce, frequencies, zip, combinations, find, unzip2 } from './util';
 
 (async () => {
     const input = await read(process.stdin);

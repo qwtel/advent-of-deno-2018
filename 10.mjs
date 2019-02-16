@@ -14,7 +14,7 @@ import {
     find,
     pluck,
     Array2D
-} from './util.mjs';
+} from './util';
 
 (async () => {
     const input = await read(process.stdin);
@@ -63,9 +63,8 @@ import {
     const field = new Array2D(getBounds(finalPositions));
     for (const p of finalPositions) field.set(p, true);
 
-    for (const row of field.map(x => x ? '#' : '.').transpose().rows()) {
-        console.log(row.join(''));
-    }
+    const fieldRepr = field.map(x => x ? '#' : '.');
+    console.log(fieldRepr.toString());
 
     // 2
     console.log(sec);
@@ -94,9 +93,7 @@ import {
     //         for (const { position } of data) field.set(position, true);
 
     //         const fieldRepr = field.map(x => x ? '#' : '.');
-    //         for (const row of fieldRepr.transpose().rows()) {
-    //             console.log(row.join(''))
-    //         }
+    //         console.log(fieldRepr.toString());
     //         console.log(sec);
     //         console.log('');
 

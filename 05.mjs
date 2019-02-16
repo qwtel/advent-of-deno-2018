@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, pipe, map, min } from './util.mjs';
+import { read, pipe, map, min } from './util';
 
 (async () => {
     const input = await read(process.stdin);
