@@ -1,76 +1,42 @@
 #!/usr/bin/env node --experimental-modules
 
-import { read, Array2D, range, pipe, filter, map, arrayCompare, combinations, find, mod } from './util';
+import { read, Array2D, range, pipe, filter, map, arrayCompare, sort, pairwise, find, mod } from './util';
+
+const N = '^';
+const E = '>';
+const S = 'v';
+const W = '<';
+
+const DIRS = [N, E, S, W];
+
+const LEFT = -1;
+const STRAIGHT = 0;
+const RIGHT = 1;
+
+const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
 
 (async () => {
     const input = await read(process.stdin);
-
-    const HL = '─';
-    const VL = '│';
-    const NW = '┌';
-    const SW = '└';
-    const NE = '┐';
-    const SE = '┘';
-    const CR = '┼';
-
-    const N = '▲';
-    const E = '▶';
-    const S = '▼';
-    const W = '◀';
-
-    const DIRS = [N, E, S, W];
-
-    const LEFT = -1;
-    const STRAIGHT = 0;
-    const RIGHT = 1;
-
-    const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
 
     const initialState = Array2D.of(input
         .split('\n')
         .map(r => r.split(''))
     );
 
-    const field = initialState.map((c, [x, y]) => {
+    const field = initialState.map(c => {
         switch (c) {
-            case '+': return CR;
-            case 'v':
-            case '^':
-            case '|': return VL;
-            case '<':
-            case '>':
-            case '-': return HL;
-            case '/': {
-                const above = initialState.get([x, y - 1]);
-                return ['|', '+', 'v', '^'].includes(above)
-                    ? SE
-                    : NW;
-            }
-            case '\\': {
-                const above = initialState.get([x, y - 1]);
-                return ['|', '+', 'v', '^'].includes(above)
-                    ? SW
-                    : NE;
-            }
+            case '>': return '-';
+            case '<': return '-';
+            case '^': return '|';
+            case 'v': return '|';
             default: return c;
         }
     });
 
-    const dirMap = new Map([
-        ['^', N],
-        ['>', E],
-        ['v', S],
-        ['<', W],
-    ]);
-
     const initialCarts = [...pipe(
         initialState.entries(),
-        filter(([, c]) => [...dirMap.keys()].includes(c)),
-        map(([pos, dir]) => ({
-            pos,
-            dir: dirMap.get(dir),
-            turnIndex: 0
-        })),
+        filter(([, c]) => DIRS.includes(c)),
+        map(([pos, dir]) => ({ pos, dir, turnIndex: 0 })),
     )];
 
     const comparePos = ({ pos: [ax, ay] }, { pos: [bx, by] }) =>
@@ -95,25 +61,23 @@ import { read, Array2D, range, pipe, filter, map, arrayCompare, combinations, fi
     function updateCart(cart) {
         const territory = field.get(cart.pos);
         switch (territory) {
-            case CR: {
+            case '+': {
                 cart.dir = rotate(cart.dir, TURN_TABLE[cart.turnIndex]);
                 cart.turnIndex = (cart.turnIndex + 1) % 3;
                 cart.pos = move(cart.pos, cart.dir);
                 return cart;
             }
-            case VL:
-            case HL: {
+            case '-':
+            case '|': {
                 cart.pos = move(cart.pos, cart.dir);
                 return cart;
             }
-            case SE:
-            case NW: {
+            case '/': {
                 cart.dir = rotate(cart.dir, isVert(cart.dir) ? RIGHT : LEFT)
                 cart.pos = move(cart.pos, cart.dir);
                 return cart;
             }
-            case SW:
-            case NE: {
+            case '\\': {
                 cart.dir = rotate(cart.dir, isVert(cart.dir) ? LEFT : RIGHT)
                 cart.pos = move(cart.pos, cart.dir);
                 return cart;
@@ -124,15 +88,6 @@ import { read, Array2D, range, pipe, filter, map, arrayCompare, combinations, fi
         }
     }
 
-    function printState(carts) {
-        const fieldRepr = field.clone();
-        for (const { pos, dir } of carts) {
-            if (DIRS.includes(fieldRepr.get(pos))) fieldRepr.set(pos, 'X');
-            else fieldRepr.set(pos, dir);
-        }
-        return fieldRepr.toString();
-    }
-
     // 1
     {
         const carts = initialCarts.map(({ ...data }) => ({ ...data }));
@@ -141,7 +96,7 @@ import { read, Array2D, range, pipe, filter, map, arrayCompare, combinations, fi
         outerloop: for (tick of range()) {
             if (process.env.DEBUG) {
                 console.log(tick);
-                console.log(printState(carts));
+                console.log(printState(field, carts));
             }
             for (const cart of carts.sort(comparePos)) {
                 updateCart(cart);
@@ -150,7 +105,7 @@ import { read, Array2D, range, pipe, filter, map, arrayCompare, combinations, fi
         }
         if (process.env.DEBUG) {
             console.log(tick);
-            console.log(printState(carts));
+            console.log(printState(field, carts));
         }
         console.log(findDuplicate(carts, comparePos)[0].pos.join());
     }
@@ -181,7 +136,7 @@ import { read, Array2D, range, pipe, filter, map, arrayCompare, combinations, fi
 
             if (process.env.DEBUG) {
                 console.log(tick);
-                console.log(printState(carts));
+                console.log(printState(field, carts));
             }
 
             if (carts.length === 1) break outerloop;
@@ -193,7 +148,43 @@ import { read, Array2D, range, pipe, filter, map, arrayCompare, combinations, fi
 
 function findDuplicate(xs, cf = (a, b) => a - b) {
     return pipe(
-        combinations(xs, xs),
+        xs,
+        sort(cf),
+        pairwise(),
         find(([a, b]) => cf(a, b) === 0),
     );
+}
+
+function printState(field, carts) {
+    const fieldRepr = field.clone();
+
+    for (const { pos, dir } of carts) {
+        if (DIRS.includes(fieldRepr.get(pos))) fieldRepr.set(pos, 'X');
+        else fieldRepr.set(pos, dir);
+    }
+
+    return fieldRepr.map((c, [x, y]) => {
+        switch (c) {
+            case '^': return '▲';
+            case '>': return '▶';
+            case 'v': return '▼';
+            case '<': return '◀'
+            case '+': return '┼';
+            case '|': return '│';
+            case '-': return '─';
+            case '/': {
+                const above = field.get([x, y - 1]);
+                return ['|', '+', 'v', '^'].includes(above)
+                    ? '┘'
+                    : '┌';
+            }
+            case '\\': {
+                const above = field.get([x, y - 1]);
+                return ['|', '+', 'v', '^'].includes(above)
+                    ? '└'
+                    : '┐';
+            }
+            default: return c;
+        }
+    }).toString();
 }
