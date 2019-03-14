@@ -85,8 +85,7 @@ import { read, args, flatten, findAndRemove, pad, subtract } from './util/index.
             //     console.log(`${padf(sec)}: ${status}   ${order.join('')}`);
             // }
 
-            if (order.length === points.size)
-                return sec;
+            if (order.length === points.size) return sec;
 
             const busy = pipe(workers, filter(([, w]) => w.task != null));
             for (const [n, state] of busy) {

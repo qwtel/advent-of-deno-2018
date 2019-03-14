@@ -16,17 +16,17 @@ import { read } from './util/index.ts';
         return { date: RE_DATE.exec(s).slice(1).map(Number) };
     }
 
-    type Type = 'asleep' | 'wakeup' | 'begins';
+    enum Type { Asleep, Wakeup, Begins }
 
     function parseType(s: string): { type: Type, guard?: number } {
         if (RE_ASLEEP.test(s)) {
-            return { type: 'asleep' };
+            return { type: Type.Asleep };
         }
         if (RE_WAKEUP.test(s)) {
-            return { type: 'wakeup' };
+            return { type: Type.Wakeup };
         }
         const [, guard] = RE_BEGINS.exec(s);
-        return { type: 'begins', guard: Number(guard) };
+        return { type: Type.Begins, guard: Number(guard) };
     }
 
     type LogEntry = { guard: number, start: number, end?: number };
@@ -41,17 +41,17 @@ import { read } from './util/index.ts';
         })),
         reduce(([guard, log]: [number, Log], entry) => {
             switch (entry.type) {
-                case 'begins': {
+                case Type.Begins: {
                     return [entry.guard, log];
                 }
-                case 'asleep': {
+                case Type.Asleep: {
                     const { date: [, , , hour, minute] } = entry;
                     return [guard, log.concat({
                         guard,
                         start: hour !== 0 ? 0 : minute,
                     })];
                 }
-                case 'wakeup': {
+                case Type.Wakeup: {
                     const { guard, start } = log.pop();
                     const { date: [, , , , minute] } = entry;
                     return [guard, log.concat({

@@ -12,9 +12,9 @@ import { read, add } from './util/index.ts';
     // 1
     console.log(pipe(input, reduce(add, 0)));
 
-    class SetX<X> extends Set<X> { reduced?: X }
-
     // 2
+    interface SetX<T> extends Set<T> { reduced?: T }
+
     const res = pipe(
         cycle(input),
         scan(add, 0),
@@ -22,7 +22,7 @@ import { read, add } from './util/index.ts';
             seen.has(freq)
                 ? (seen.reduced = freq, seen)
                 : seen.add(freq),
-            new SetX()
+            new Set() as SetX<number>
         ),
         find(x => !!x.reduced),
     );

@@ -1,7 +1,7 @@
 #!/usr/bin/env deno
 
 import { range, pipe, map, tap, forEach, filter, sum, product2, maxBy, maxByScan, distinctUntilChanged } from './deps.ts';
-import { read, Array2D } from './util/index.ts';
+import { read, Array2D, Point } from './util/index.ts';
 
 (async () => {
     const input = Number(await read(Deno.stdin));
@@ -20,8 +20,6 @@ import { read, Array2D } from './util/index.ts';
         powerLevel -= 5;
         return powerLevel;
     });
-
-    type Point = [number, number];
 
     function get3x3([x, y]: Point) {
         return product2([...range(x, x + 3)], [...range(y, y + 3)]);

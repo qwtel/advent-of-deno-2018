@@ -1,16 +1,13 @@
 #!/usr/bin/env deno
 
 import { range, constantly, zip2, unzip2, pipe, map, minMax, scan, pairwise, find, pluck } from './deps.ts';
-import { read, Array2D } from './util/index.ts';
+import { read, Array2D, Point, Bounds } from './util/index.ts';
 
 (async () => {
     const input = await read(Deno.stdin);
     const lines = input.trim().split('\n');
 
     const RE = /position=<(.*), (.*)> velocity=<(.*), (.*)>/;
-
-    type Point = [number, number];
-    type Bounds = [Point, Point];
 
     const [positions, velocities] = pipe(
         lines,

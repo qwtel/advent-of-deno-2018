@@ -8,7 +8,7 @@ import { read, add } from './util/index.ts';
     const treeInput = input.trim().split(' ').map(Number);
 
     // 1
-    function walkTree(it) {
+    function walkTree(it: Iterator<number>) {
         const [a, b] = [it.next().value, it.next().value];
         let num = 0;
         for (let i = 0; i < a; i++) num += walkTree(it);
@@ -19,10 +19,12 @@ import { read, add } from './util/index.ts';
     console.log(walkTree(treeInput[Symbol.iterator]()));
 
     // 2
-    function buildTree(it, c = 0) {
+    type Tree = { letter?: string, children: Tree[], meta: number[] };
+
+    function buildTree(it: Iterator<number>, c = 0): Tree {
         const letter = String.fromCharCode(c + 65);
-        const children = [];
-        const meta = [];
+        const children: Tree[] = [];
+        const meta: number[] = [];
         const [a, b] = [it.next().value, it.next().value];
         for (let i = 0; i < a; i++) children.push(buildTree(it, ++c));
         for (let j = 0; j < b; j++) meta.push(it.next().value);
@@ -30,7 +32,7 @@ import { read, add } from './util/index.ts';
 
     }
 
-    function countStuff({ children, meta }) {
+    function countStuff({ children, meta }: Tree): number {
         if (!children.length) return meta.reduce(add, 0);
         return meta
             .map(i => children[i - 1])

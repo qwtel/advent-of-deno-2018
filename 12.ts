@@ -11,7 +11,7 @@ import { read } from './util/index.ts';
     const RE_INSTATE = /initial state: ([.#]*)/;
     const RE_PATTERN = /([.#]*) => ([.#])/;
 
-    type Plant = string//'.' | '#';
+    type Plant = '.' | '#';
 
     const [state] = RE_INSTATE.exec(stateStr).slice(1) as [string];
     const patterns = new Map(

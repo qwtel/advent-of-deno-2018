@@ -5,20 +5,23 @@ import { read } from './util/index.ts';
 
 (async () => {
     const input = await read(Deno.stdin);
-    const polymer = input.trim().split('');
 
-    function isReacting(x, y) {
+    type Unit = string;
+
+    const polymer: Unit[] = input.trim().split('');
+
+    function isReacting(x: Unit, y: Unit) {
         return Math.abs(x.charCodeAt(0) - y.charCodeAt(0)) === 32
     }
 
-    function addUnit(polymer, b) {
+    function addUnit(polymer: Unit[], b: Unit) {
         const a = polymer.pop();
         if (!a) polymer.push(b);
         else if (!isReacting(a, b)) polymer.push(a, b);
         return polymer;
     }
 
-    function solve(polymer) {
+    function solve(polymer: Unit[]) {
         return polymer.reduce(addUnit, []);
     }
 
@@ -27,7 +30,7 @@ import { read } from './util/index.ts';
     console.log(res.length);
 
     // 2
-    const notLetter = letter => x => x !== letter && x.toLowerCase() !== letter;
+    const notLetter = (letter: Unit) => (x: Unit) => x !== letter && x.toLowerCase() !== letter;
     const letters = new Set(polymer.map(x => x.toLowerCase()));
     const solution = pipe(
         letters,

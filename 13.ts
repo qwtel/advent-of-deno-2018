@@ -1,25 +1,25 @@
 #!/usr/bin/env deno
 
 import { range, pipe, filter, map, sort, pairwise, find } from './deps.ts';
-import { read, Array2D, arrayCompare, mod } from './util/index.ts';
+import { read, Array2D, Point, arrayCompare, mod } from './util/index.ts';
 
 type Cart = { pos: Point, dir: Dir, turnIndex: number };
-type Turn = -1 | 0 | 1;
-type Point = [number, number];
-type Dir = '^' | '>' | 'v' | '<';
 
-const N: Dir = '^';
-const E: Dir = '>';
-const S: Dir = 'v';
-const W: Dir = '<';
+enum Dir { 
+    N = '^',
+    E = '>',
+    S = 'v',
+    W = '<',
+};
 
-const DIRS = [N, E, S, W];
+enum Turn {
+    Left = -1,
+    Streight = 0,
+    Right = 1,
+};
 
-const LEFT: Turn = -1;
-const STRAIGHT: Turn = 0;
-const RIGHT: Turn = 1;
-
-const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
+const DIRS = [Dir.N, Dir.E, Dir.S, Dir.W];
+const TURN_TABLE = [Turn.Left, Turn.Streight, Turn.Right];
 
 (async () => {
     const input = await read(Deno.stdin);
@@ -54,14 +54,14 @@ const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
 
     function move([x, y]: Point, dir: Dir): Point {
         switch (dir) {
-            case N: return [x, y - 1];
-            case E: return [x + 1, y];
-            case S: return [x, y + 1];
-            case W: return [x - 1, y];
+            case Dir.N: return [x, y - 1];
+            case Dir.E: return [x + 1, y];
+            case Dir.S: return [x, y + 1];
+            case Dir.W: return [x - 1, y];
         }
     }
 
-    const isVert = (x: Dir) => x === N || x === S;
+    const isVert = (x: Dir) => x === Dir.N || x === Dir.S;
 
     function updateCart(cart: Cart) {
         const territory = field.get(cart.pos);
@@ -78,12 +78,12 @@ const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
                 return;
             }
             case '/': {
-                cart.dir = rotate(cart.dir, isVert(cart.dir) ? RIGHT : LEFT)
+                cart.dir = rotate(cart.dir, isVert(cart.dir) ? Turn.Right : Turn.Left)
                 cart.pos = move(cart.pos, cart.dir);
                 return;
             }
             case '\\': {
-                cart.dir = rotate(cart.dir, isVert(cart.dir) ? LEFT : RIGHT)
+                cart.dir = rotate(cart.dir, isVert(cart.dir) ? Turn.Left : Turn.Right)
                 cart.pos = move(cart.pos, cart.dir);
                 return;
             }

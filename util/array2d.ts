@@ -1,5 +1,5 @@
-type Point = [number, number];
-type Bounds = [[number, number], [number, number]];
+export type Point = [number, number];
+export type Bounds = [[number, number], [number, number]];
 
 export class Array2D<X> {
     _bounds: Bounds;
