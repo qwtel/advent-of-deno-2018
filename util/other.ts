@@ -39,7 +39,7 @@ export function map2D(arr2D, f) {
     return arr2D.map(row => row.map(f));
 }
 
-export function arrayCompare(as, bs) {
+export function arrayCompare(as, bs): number {
     const res = as[0] - bs[0];
     if (res === 0 && as.length > 1) {
         return arrayCompare(as.slice(1), bs.slice(1));

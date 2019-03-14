@@ -45,7 +45,7 @@ import { read, Array2D, Point } from './util/index.ts';
     // 2
     // let lastN = 0;
 
-    type PointN = [number, number, number];
+    type Point3 = [number, number, number];
 
     pipe(
         product2([...range(1, 32)], [...grid.coords()]),
@@ -54,7 +54,7 @@ import { read, Array2D, Point } from './util/index.ts';
             getNxN([x, y], n),
             map(p => grid.get(p)),
             sum(),
-        )] as [PointN, number]),
+        )] as [Point3, number]),
         /*process.env.DEBUG 
             ? tap(([[, , n]]) => { if (n != lastN) { console.log(n); lastN = n; } })
             : _ => _, */

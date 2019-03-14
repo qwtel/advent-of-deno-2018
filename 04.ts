@@ -16,17 +16,17 @@ import { read } from './util/index.ts';
         return { date: RE_DATE.exec(s).slice(1).map(Number) };
     }
 
-    enum Type { Asleep, Wakeup, Begins }
+    enum Action { Asleep, Wakeup, Begins }
 
-    function parseType(s: string): { type: Type, guard?: number } {
+    function parseAction(s: string): { action: Action, guard?: number } {
         if (RE_ASLEEP.test(s)) {
-            return { type: Type.Asleep };
+            return { action: Action.Asleep };
         }
         if (RE_WAKEUP.test(s)) {
-            return { type: Type.Wakeup };
+            return { action: Action.Wakeup };
         }
         const [, guard] = RE_BEGINS.exec(s);
-        return { type: Type.Begins, guard: Number(guard) };
+        return { action: Action.Begins, guard: Number(guard) };
     }
 
     type LogEntry = { guard: number, start: number, end?: number };
@@ -35,23 +35,23 @@ import { read } from './util/index.ts';
     const [, sleepLog] = pipe(
         lines.sort(),
         map(x => [x.substr(0, 18), x.substr(19)]),
-        map(([dateStr, typeStr]) => ({
+        map(([dateStr, actionString]) => ({
             ...parseDate(dateStr),
-            ...parseType(typeStr)
+            ...parseAction(actionString)
         })),
         reduce(([guard, log]: [number, Log], entry) => {
-            switch (entry.type) {
-                case Type.Begins: {
+            switch (entry.action) {
+                case Action.Begins: {
                     return [entry.guard, log];
                 }
-                case Type.Asleep: {
+                case Action.Asleep: {
                     const { date: [, , , hour, minute] } = entry;
                     return [guard, log.concat({
                         guard,
                         start: hour !== 0 ? 0 : minute,
                     })];
                 }
-                case Type.Wakeup: {
+                case Action.Wakeup: {
                     const { guard, start } = log.pop();
                     const { date: [, , , , minute] } = entry;
                     return [guard, log.concat({
@@ -91,11 +91,11 @@ import { read } from './util/index.ts';
             maxBy(([, a], [, b]) => a - b)
         );
 
-        const [maxSleepMin] = pipe(
+        const [maxSleepMin]: [number, number] = pipe(
             sleepLogByGuard.get(guard),
             getSleepPlan,
             x => x.entries(),
-            maxBy<[number, number]>(([, a], [, b]) => a - b),
+            maxBy(([, a], [, b]) => a - b),
         );
         console.log(guard * maxSleepMin)
     }

@@ -1,15 +1,13 @@
 #!/usr/bin/env deno
 
 import { pipe, pluck, max, range } from './deps.ts';
-import { read, args, subtract, Array2D } from './util/index.ts';
+import { read, args, subtract, Array2D, Point } from './util/index.ts';
 
 (async () => {
     const input = await read(Deno.stdin);
 
     // Usage: ./6.mjs -m 32
     const [MAX] = args(['-m'], [10000]);
-
-    type Point = [number, number];
 
     const bodies = input
         .trim()

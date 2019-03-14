@@ -3,9 +3,7 @@
 import { range, pipe, filter, map, sort, pairwise, find } from './deps.ts';
 import { read, Array2D, Point, arrayCompare, mod } from './util/index.ts';
 
-type Cart = { pos: Point, dir: Dir, turnIndex: number };
-
-enum Dir { 
+enum Dir {
     N = '^',
     E = '>',
     S = 'v',
@@ -18,8 +16,10 @@ enum Turn {
     Right = 1,
 };
 
+type Cart = { pos: Point, dir: Dir, turnIndex: number };
+
 const DIRS = [Dir.N, Dir.E, Dir.S, Dir.W];
-const TURN_TABLE = [Turn.Left, Turn.Streight, Turn.Right];
+const TURNS = [Turn.Left, Turn.Streight, Turn.Right];
 
 (async () => {
     const input = await read(Deno.stdin);
@@ -42,7 +42,7 @@ const TURN_TABLE = [Turn.Left, Turn.Streight, Turn.Right];
     const initialCarts = [...pipe(
         initialState.entries(),
         filter(([, c]) => DIRS.includes(c as Dir)),
-        map(([pos, dir]) => ({ pos, dir, turnIndex: 0 } as Cart)),
+        map(([pos, dir]) => ({ pos, dir: dir, turnIndex: 0 } as Cart)),
     )];
 
     const comparePos = ({ pos: [ax, ay] }, { pos: [bx, by] }) => arrayCompare([ay, ax], [by, bx]);
@@ -67,7 +67,7 @@ const TURN_TABLE = [Turn.Left, Turn.Streight, Turn.Right];
         const territory = field.get(cart.pos);
         switch (territory) {
             case '+': {
-                cart.dir = rotate(cart.dir, TURN_TABLE[cart.turnIndex]);
+                cart.dir = rotate(cart.dir, TURNS[cart.turnIndex]);
                 cart.turnIndex = (cart.turnIndex + 1) % 3;
                 cart.pos = move(cart.pos, cart.dir);
                 return;
@@ -161,7 +161,7 @@ function findDuplicate<X>(xs: Iterable<X>, cf: (a: X, b: X) => number) {
 }
 
 
-function printState(field: Array2D<string>, carts: { pos: Point, dir: Dir }[]) {
+function printState(field: Array2D<string>, carts: Cart[]) {
     const fieldRepr = field.clone();
 
     for (const { pos, dir } of carts) {
