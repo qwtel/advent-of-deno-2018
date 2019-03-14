@@ -95,7 +95,7 @@ const TURNS = [Turn.Left, Turn.Streight, Turn.Right];
 
     // 1
     {
-        const carts = initialCarts.map(({ ...data }) => ({ ...data }));
+        const carts: Cart[] = initialCarts.map(({ ...data }) => ({ ...data }));
 
         let tick: number;
         outerloop: for (tick of range()) {
@@ -105,7 +105,7 @@ const TURNS = [Turn.Left, Turn.Streight, Turn.Right];
             // }
             for (const cart of carts.sort(comparePos)) {
                 updateCart(cart);
-                if (findDuplicate<Cart>(carts, comparePos)) break outerloop;
+                if (findDuplicate(carts, comparePos)) break outerloop;
             }
         }
         // if (process.env.DEBUG) {
@@ -117,7 +117,7 @@ const TURNS = [Turn.Left, Turn.Streight, Turn.Right];
 
     // 2
     {
-        const carts = initialCarts.map(({ ...data }) => ({ ...data }));
+        const carts: Cart[] = initialCarts.map(({ ...data }) => ({ ...data }));
 
         let tick: number;
         outerloop: for (tick of range()) {
