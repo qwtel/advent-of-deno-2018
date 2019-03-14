@@ -1,9 +1,9 @@
-#!/usr/bin/env node --experimental-modules
+#!/usr/bin/env deno
 
-import { read, add } from './util';
+import { read, add } from './util/index.ts';
 
 (async () => {
-    const input = await read(process.stdin);
+    const input = await read(Deno.stdin);
 
     const treeInput = input.trim().split(' ').map(Number);
 
@@ -20,15 +20,13 @@ import { read, add } from './util';
 
     // 2
     function buildTree(it, c = 0) {
-        const letter = process.env.DEBUG ? String.fromCharCode(c + 65) : null;
+        const letter = String.fromCharCode(c + 65);
         const children = [];
         const meta = [];
         const [a, b] = [it.next().value, it.next().value];
         for (let i = 0; i < a; i++) children.push(buildTree(it, ++c));
         for (let j = 0; j < b; j++) meta.push(it.next().value);
-        return process.env.DEBUG
-            ? { letter, children, meta }
-            : { children, meta };
+        return { letter, children, meta };
 
     }
 
@@ -42,7 +40,7 @@ import { read, add } from './util';
     }
 
     const tree = buildTree(treeInput[Symbol.iterator]());
-    if (process.env.DEBUG) console.log(tree);
+    // if (process.env.DEBUG) console.log(tree);
 
     console.log(countStuff(tree));
 })();

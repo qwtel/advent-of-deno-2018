@@ -1,19 +1,19 @@
-export function frequencies(iterable) {
-    const fs = new Map();
+export function frequencies<X>(iterable: Iterable<X>) {
+    const fs = new Map<X, number>();
     for (const item of iterable) {
         fs.set(item, 1 + (fs.get(item) || 0));
     }
     return fs;
 }
 
-export function findAndRemove(arr, f) {
+export function findAndRemove<X>(arr: X[], f: (x: X) => boolean) {
     const i = arr.findIndex(f);
     return i === -1
         ? null
         : arr.splice(i, 1)[0];
 }
 
-export function mod(a, n) {
+export function mod(a: number, n: number) {
     return ((a % n) + n) % n
 }
 
@@ -25,7 +25,7 @@ export function transpose(m) {
     return m[0].map((_, i) => m.map(x => x[i]));
 }
 
-export function flatten(as) {
+export function flatten<X>(as: X[][]): X[] {
     return as.reduce((res, a) => (res.push(...a), res), [])
 }
 
@@ -58,12 +58,12 @@ export function getIn(keys) {
     }
 }
 
-export const add = (a, b) => a + b;
-export const sub = (a, b) => a - b;
-export const mul = (a, b) => a * b;
-export const div = (a, b) => a / b;
+export const add = (a: number, b: number): number => a + b;
+export const sub = (a: number, b: number): number => a - b;
+export const mul = (a: number, b: number): number => a * b;
+export const div = (a: number, b: number): number => a / b;
 
-export const addN = (a, ...bs) => bs.reduce(add, a);
-export const subN = (a, ...bs) => a - addN(...bs);
-export const mulN = (a, ...bs) => bs.reduce(mul, a);
-export const divN = (a, ...bs) => a / mulN(...bs);
+export const addN = (a?: number, ...bs: number[]) => bs.reduce(add, a);
+export const subN = (a?: number, ...bs: number[]) => a - addN(...bs);
+export const mulN = (a?: number, ...bs: number[]) => bs.reduce(mul, a);
+export const divN = (a?: number, ...bs: number[]) => a / mulN(...bs);

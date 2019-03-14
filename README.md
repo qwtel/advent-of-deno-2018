@@ -1,14 +1,15 @@
-# Advent of ES
-JavaScript solutions for [Advent of Code 2018][AoC] using the latest ECMAScript features, specifically generators and iterators.
+# Advent of Deno
+TypeScript solutions for [Advent of Code 2018][AoC] using the latest ECMAScript features, specifically generators and iterators.
 
 [AoC]: https://adventofcode.com/2018
 
 ## Run
-Requires node 11+. Input via `stdin`, e.g. 
+Requires [deno]. Input via `stdin`, e.g. 
 
-    cat input/01.txt | ./01.mjs
+    deno 01.ts < input/01.txt
 
-`.mjs` files are exectutable to avoid having to type `node --experimental-modules` over and over again.
+
+[deno]: https://deno.land
 
 ## Not your granpa's JS
 With generators, complex computations can be represented using functional building blocks. For example, finding the first duplicate in an (infinite) series of additions can be expressed as:
@@ -48,7 +49,7 @@ while (true) {
 
 Why is the first solution "better"? It's really a matter of taste, but personally I prefer the fact that each idea is expressed separately. I.e. the cycling of the input is one line instead of explicitly incrementing and wrapping and index, as is the lookup in the set, etc...
 
-Obviously the first implementation requires a variety of helper functions such as `pipe`, `scan`, `find`, etc. However, as a look at [`util.mjs`](./util/iter.mjs) will show, they are suprisingly compact and easy to implement using generator functions.
+Obviously the first implementation requires a variety of helper functions such as `pipe`, `scan`, `find`, etc. However, as a look at [`lilit`](https://github.com/qwtel/lilit) will show, they are suprisingly compact and easy to implement using generator functions.
 
 ### Further Reading
 

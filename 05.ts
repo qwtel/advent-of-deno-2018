@@ -1,9 +1,10 @@
-#!/usr/bin/env node --experimental-modules
+#!/usr/bin/env deno
 
-import { read, pipe, map, min } from './util';
+import { pipe, map, min } from './deps.ts';
+import { read } from './util/index.ts';
 
 (async () => {
-    const input = await read(process.stdin);
+    const input = await read(Deno.stdin);
     const polymer = input.trim().split('');
 
     function isReacting(x, y) {
@@ -33,7 +34,7 @@ import { read, pipe, map, min } from './util';
         map(l => polymer.filter(notLetter(l))),
         map(solve),
         map(x => x.length),
-        min(polymer.length)
+        min()
     );
     console.log(solution);
 

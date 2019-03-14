@@ -1,15 +1,13 @@
-import { pipe, map, replaceWhen } from './iter.mjs';
+import { pipe, map, replaceWhen } from '../deps.ts';
 
 /**
  * Helper function to read the standard input (or any other stream) 
  * to the end and return as UTF-8 string.
  */
-export async function read(stream) {
-    let buffer = Buffer.alloc(0);
-    for await (const chunk of stream) {
-        buffer = Buffer.concat([buffer, chunk]);
-    }
-    return buffer.toString('utf8');
+export async function read(file: Deno.File): Promise<string> {
+    const b = new Deno.Buffer();
+    await b.readFrom(file);
+    return b.toString();
 }
 
 /** 
@@ -17,11 +15,11 @@ export async function read(stream) {
  * from the argument list with fallback values. Mind the empty space between flag and number!
  * E.g. `args(['-w', '-d'], [5, 60])`
  */
-export function args(flags, defaults) {
+export function args(flags: string[], defaults: number[]): Iterable<number> {
     return pipe(
         flags,
-        map(flag => process.argv.findIndex(arg => arg === flag)),
-        map(i => process.argv[i + 1]),
+        map(flag => Deno.args.findIndex((arg: string) => arg === flag)),
+        map(i => Deno.args[i + 1]),
         map(Number),
         replaceWhen(Number.isNaN, defaults),
     );

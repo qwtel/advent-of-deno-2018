@@ -1,23 +1,29 @@
-#!/usr/bin/env node --experimental-modules
+#!/usr/bin/env deno
 
-import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util';
+import { pipe, pluck, max, range } from './deps.ts';
+import { read, args, subtract, Array2D } from './util/index.ts';
 
 (async () => {
-    const input = await read(process.stdin);
+    const input = await read(Deno.stdin);
 
     // Usage: ./6.mjs -m 32
     const [MAX] = args(['-m'], [10000]);
 
-    const bodies = input.trim().split('\n').map(s => s.split(', ').map(Number));
-    // console.log(points);
+    type Point = [number, number];
 
-    // console.time('solve');
-    const maxX = 1 + pipe(bodies, pluck(0), max());
-    const maxY = 1 + pipe(bodies, pluck(1), max());
-    const field = new Array2D([[0, 0], [maxX, maxY]]);
+    const bodies = input
+        .trim()
+        .split('\n')
+        .map(s => s.split(', ').map(Number) as Point);
+
+    const maxX = 1 + pipe(bodies, pluck<number>(0), max());
+    const maxY = 1 + pipe(bodies, pluck<number>(1), max());
+
+    type Cell = { index: number, dist?: number };
+    const field = new Array2D<Cell>([[0, 0], [maxX, maxY]]);
 
     // yield all coordinates of manhatten distance `d` around point `(x, y)`
-    function* manhatten(d, [x, y] = [0, 0]) {
+    function* manhatten(d: number, [x, y] = [0, 0]): IterableIterator<Point> {
         if (d !== 0) yield [x - d, y + 0];
         for (let i = -d + 1; i < d; i++) {
             const r = d - Math.abs(i);
@@ -33,6 +39,7 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util';
     for (const dist of range()) {
         // break if no more empty cells within the field
         if (counter === size) break;
+
 
         for (const [index, body] of bodies.entries()) {
             // get all points of manhatten distance `dist` from `point`
@@ -66,16 +73,16 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util';
     }
     const res = pipe(counts.values(), max());
 
-    if (process.env.DEBUG) {
-        const fieldRepr = field.map(({ index: i, dist }) => {
-            if (dist === 0) return String.fromCharCode(i + 65);
-            return i >= 0 ? String.fromCharCode(i + 65 + 32) : '.';
-        });
+    // if (process.env.DEBUG) {
+    //     const fieldRepr = field.map(({ index: i, dist }) => {
+    //         if (dist === 0) return String.fromCharCode(i + 65);
+    //         return i >= 0 ? String.fromCharCode(i + 65 + 32) : '.';
+    //     });
 
-        for (const row of fieldRepr.columns()) {
-          console.log(row.join(''))
-        }
-    }
+    //     for (const row of fieldRepr.columns()) {
+    //       console.log(row.join(''))
+    //     }
+    // }
 
     console.log(res);
 
@@ -92,18 +99,18 @@ import { read, args, pipe, pluck, max, range, subtract, Array2D } from './util';
         if (total < MAX) region.push(coord);
     }
 
-    if (process.env.DEBUG) {
-        const fieldRepr = field.map(({ index: i, dist }) => {
-            if (dist === 0) return String.fromCharCode(i + 65);
-            return '.'
-        });
+    // if (process.env.DEBUG) {
+    //     const fieldRepr = field.map(({ index: i, dist }) => {
+    //         if (dist === 0) return String.fromCharCode(i + 65);
+    //         return '.'
+    //     });
 
-        for (const p of region) {
-            if (fieldRepr.get(p) === '.') fieldRepr.set(p, '#');
-        }
+    //     for (const p of region) {
+    //         if (fieldRepr.get(p) === '.') fieldRepr.set(p, '#');
+    //     }
 
-        console.log(fieldRepr.toString());
-    }
+    //     console.log(fieldRepr.toString());
+    // }
 
     console.log(region.length);
 

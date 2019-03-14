@@ -1,11 +1,12 @@
-#!/usr/bin/env node --experimental-modules
+#!/usr/bin/env deno
 
-import { read, range, pipe, map, tap, forEach, filter, Array2D, sum, product, maxBy, maxByScan } from './util';
+import { range, pipe, map, tap, forEach, filter, sum, product2, maxBy, maxByScan, distinctUntilChanged } from './deps.ts';
+import { read, Array2D } from './util/index.ts';
 
 (async () => {
-    const input = Number(await read(process.stdin));
+    const input = Number(await read(Deno.stdin));
 
-    const hundredthDigit = n => {
+    const hundredthDigit = (n: number) => {
         const s = String(n);
         return Number(s[s.length - 3]);
     };
@@ -20,12 +21,14 @@ import { read, range, pipe, map, tap, forEach, filter, Array2D, sum, product, ma
         return powerLevel;
     });
 
-    function get3x3([x, y]) {
-        return product([...range(x, x + 3)], [...range(y, y + 3)]);
+    type Point = [number, number];
+
+    function get3x3([x, y]: Point) {
+        return product2([...range(x, x + 3)], [...range(y, y + 3)]);
     }
 
-    function getNxN([x, y], n = 3) {
-        return product([...range(x, x + n)], [...range(y, y + n)]);
+    function getNxN([x, y]: Point, n = 3) {
+        return product2([...range(x, x + n)], [...range(y, y + n)]);
     }
 
     // 1
@@ -36,30 +39,33 @@ import { read, range, pipe, map, tap, forEach, filter, Array2D, sum, product, ma
             get3x3(p),
             map(p => grid.get(p)),
             sum(),
-        )]),
+        )] as [Point, number]),
         maxBy(([, a], [, b]) => a - b),
-        ([x]) => console.log(x.join()),
+        ([p]) => console.log(p.join()),
     );
 
     // 2
-    let lastN = 0;
+    // let lastN = 0;
+
+    type PointN = [number, number, number];
+
     pipe(
-        product([...range(1, 32)], [...grid.coords()]),
+        product2([...range(1, 32)], [...grid.coords()]),
         filter(([n, [x, y]]) => x < 301 - n && y < 301 - n),
-        map(([n, [x, y]]) => [[x,y,n], pipe(
+        map(([n, [x, y]]) => [[x, y, n], pipe(
             getNxN([x, y], n),
             map(p => grid.get(p)),
             sum(),
-        )]),
-        process.env.DEBUG 
+        )] as [PointN, number]),
+        /*process.env.DEBUG 
             ? tap(([[, , n]]) => { if (n != lastN) { console.log(n); lastN = n; } })
-            : _ => _,
-        process.env.DEBUG 
+            : _ => _, */
+        /*process.env.DEBUG 
             ? maxByScan(([, a], [, b]) => a - b)
-            : maxBy(([, a], [, b]) => a - b),
-        process.env.DEBUG 
+            :*/ maxBy(([, a], [, b]) => a - b),
+        /*process.env.DEBUG 
             ? forEach(([x, y]) => console.log([x.join(), y]))
-            : ([x]) => console.log(x.join()),
+            :*/ ([x]) => console.log(x.join()),
     );
 
 

@@ -1,33 +1,24 @@
-#!/usr/bin/env node --experimental-modules
+#!/usr/bin/env deno
 
-import {
-    read,
-    args,
-    pipe,
-    some,
-    pluck,
-    flatten,
-    findAndRemove,
-    range,
-    map,
-    filter,
-    subtract,
-    pad,
-} from './util';
+import { pipe, some, pluck, range, map, filter } from './deps.ts';
+import { read, args, flatten, findAndRemove, pad, subtract } from './util/index.ts';
 
 (async () => {
-    const input = await read(process.stdin);
+    const input = await read(Deno.stdin);
 
     // Usage: ./7.mjs -d 0 -w 2
     const [BASE_DURATION, NUM_WORKERS] = args(['-d', '-w'], [60, 5]);
 
     const RE = /Step (\w) must be finished before step (\w) can begin\./;
 
-    const edges = input.trim().split('\n').map(line => RE.exec(line).slice(1));
+    const edges = input
+        .trim()
+        .split('\n')
+        .map(line => RE.exec(line).slice(1) as [string, string]);
 
     // Build a forward and backward graph of the instructions.
-    const dirs = new Map();
-    const deps = new Map();
+    const dirs = new Map<string,string[]>();
+    const deps = new Map<string,string[]>();
     for (const [a, b] of edges) {
         dirs.set(a, (dirs.get(a) || []).concat(b).sort());
         deps.set(b, (deps.get(b) || []).concat(a).sort());
@@ -63,12 +54,14 @@ import {
     console.log(solve1());
 
     // 2
+    type Worker = { task?: string, duration: number };
+
     function solve2() {
         const queue = [...startingPoints].sort();
         const order = [];
         const workers = new Map(pipe(
             range(0, NUM_WORKERS),
-            map(n => [n, { task: null, duration: -1 }])
+            map(n => [n, { task: null, duration: -1 }] as [number, Worker])
         ));
 
         const depsComplete = task => (deps.get(task) || []).every(d => order.includes(d));
@@ -86,11 +79,11 @@ import {
                 workers.set(n, { task, duration })
             }
 
-            if (process.env.DEBUG) {
-                const padf = pad(3, 0);
-                const status = [...workers].map(([, { task }]) => task || '.').join(' ');
-                console.log(`${padf(sec)}: ${status}   ${order.join('')}`);
-            }
+            // if (process.env.DEBUG) {
+            //     const padf = pad(3, 0);
+            //     const status = [...workers].map(([, { task }]) => task || '.').join(' ');
+            //     console.log(`${padf(sec)}: ${status}   ${order.join('')}`);
+            // }
 
             if (order.length === points.size)
                 return sec;

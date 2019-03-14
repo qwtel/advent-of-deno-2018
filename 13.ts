@@ -1,22 +1,28 @@
-#!/usr/bin/env node --experimental-modules
+#!/usr/bin/env deno
 
-import { read, Array2D, range, pipe, filter, map, arrayCompare, sort, pairwise, find, mod } from './util';
+import { range, pipe, filter, map, sort, pairwise, find } from './deps.ts';
+import { read, Array2D, arrayCompare, mod } from './util/index.ts';
 
-const N = '^';
-const E = '>';
-const S = 'v';
-const W = '<';
+type Cart = { pos: Point, dir: Dir, turnIndex: number };
+type Turn = -1 | 0 | 1;
+type Point = [number, number];
+type Dir = '^' | '>' | 'v' | '<';
+
+const N: Dir = '^';
+const E: Dir = '>';
+const S: Dir = 'v';
+const W: Dir = '<';
 
 const DIRS = [N, E, S, W];
 
-const LEFT = -1;
-const STRAIGHT = 0;
-const RIGHT = 1;
+const LEFT: Turn = -1;
+const STRAIGHT: Turn = 0;
+const RIGHT: Turn = 1;
 
 const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
 
 (async () => {
-    const input = await read(process.stdin);
+    const input = await read(Deno.stdin);
 
     const initialState = Array2D.of(input
         .split('\n')
@@ -35,19 +41,18 @@ const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
 
     const initialCarts = [...pipe(
         initialState.entries(),
-        filter(([, c]) => DIRS.includes(c)),
-        map(([pos, dir]) => ({ pos, dir, turnIndex: 0 })),
+        filter(([, c]) => DIRS.includes(c as Dir)),
+        map(([pos, dir]) => ({ pos, dir, turnIndex: 0 } as Cart)),
     )];
 
-    const comparePos = ({ pos: [ax, ay] }, { pos: [bx, by] }) =>
-        arrayCompare([ay, ax], [by, bx]);
+    const comparePos = ({ pos: [ax, ay] }, { pos: [bx, by] }) => arrayCompare([ay, ax], [by, bx]);
 
-    function rotate(dir, turn) {
+    function rotate(dir: Dir, turn: Turn) {
         const i = DIRS.indexOf(dir);
         return DIRS[mod(i + turn, 4)];
     }
 
-    function move([x, y], dir) {
+    function move([x, y]: Point, dir: Dir): Point {
         switch (dir) {
             case N: return [x, y - 1];
             case E: return [x + 1, y];
@@ -56,31 +61,31 @@ const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
         }
     }
 
-    const isVert = x => x === N || x === S;
+    const isVert = (x: Dir) => x === N || x === S;
 
-    function updateCart(cart) {
+    function updateCart(cart: Cart) {
         const territory = field.get(cart.pos);
         switch (territory) {
             case '+': {
                 cart.dir = rotate(cart.dir, TURN_TABLE[cart.turnIndex]);
                 cart.turnIndex = (cart.turnIndex + 1) % 3;
                 cart.pos = move(cart.pos, cart.dir);
-                return cart;
+                return;
             }
             case '-':
             case '|': {
                 cart.pos = move(cart.pos, cart.dir);
-                return cart;
+                return;
             }
             case '/': {
                 cart.dir = rotate(cart.dir, isVert(cart.dir) ? RIGHT : LEFT)
                 cart.pos = move(cart.pos, cart.dir);
-                return cart;
+                return;
             }
             case '\\': {
                 cart.dir = rotate(cart.dir, isVert(cart.dir) ? LEFT : RIGHT)
                 cart.pos = move(cart.pos, cart.dir);
-                return cart;
+                return;
             }
             default: {
                 throw Error('Cart moved onto unknown territory');
@@ -92,29 +97,29 @@ const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
     {
         const carts = initialCarts.map(({ ...data }) => ({ ...data }));
 
-        let tick;
+        let tick: number;
         outerloop: for (tick of range()) {
-            if (process.env.DEBUG) {
-                console.log(tick);
-                console.log(printState(field, carts));
-            }
+            // if (process.env.DEBUG) {
+            //     console.log(tick);
+            //     console.log(printState(field, carts));
+            // }
             for (const cart of carts.sort(comparePos)) {
                 updateCart(cart);
-                if (findDuplicate(carts, comparePos)) break outerloop;
+                if (findDuplicate<Cart>(carts, comparePos)) break outerloop;
             }
         }
-        if (process.env.DEBUG) {
-            console.log(tick);
-            console.log(printState(field, carts));
-        }
-        console.log(findDuplicate(carts, comparePos)[0].pos.join());
+        // if (process.env.DEBUG) {
+        //     console.log(tick);
+        //     console.log(printState(field, carts));
+        // }
+        console.log(findDuplicate<Cart>(carts, comparePos)[0].pos.join());
     }
 
     // 2
     {
         const carts = initialCarts.map(({ ...data }) => ({ ...data }));
 
-        let tick;
+        let tick: number;
         outerloop: for (tick of range()) {
             carts.sort(comparePos);
 
@@ -123,7 +128,7 @@ const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
 
                 updateCart(cart);
 
-                const duplicate = findDuplicate(carts, comparePos);
+                const duplicate = findDuplicate<Cart>(carts, comparePos);
 
                 if (duplicate) {
                     const [a, b] = duplicate;
@@ -134,10 +139,10 @@ const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
                 }
             }
 
-            if (process.env.DEBUG) {
-                console.log(tick);
-                console.log(printState(field, carts));
-            }
+            // if (process.env.DEBUG) {
+            //     console.log(tick);
+            //     console.log(printState(field, carts));
+            // }
 
             if (carts.length === 1) break outerloop;
         }
@@ -146,7 +151,7 @@ const TURN_TABLE = [LEFT, STRAIGHT, RIGHT];
     }
 })();
 
-function findDuplicate(xs, cf = (a, b) => a - b) {
+function findDuplicate<X>(xs: Iterable<X>, cf: (a: X, b: X) => number) {
     return pipe(
         xs,
         sort(cf),
@@ -155,11 +160,14 @@ function findDuplicate(xs, cf = (a, b) => a - b) {
     );
 }
 
-function printState(field, carts) {
+
+function printState(field: Array2D<string>, carts: { pos: Point, dir: Dir }[]) {
     const fieldRepr = field.clone();
 
     for (const { pos, dir } of carts) {
-        if (DIRS.includes(fieldRepr.get(pos))) fieldRepr.set(pos, 'X');
+        if (DIRS.includes(fieldRepr.get(pos) as Dir)) {
+            fieldRepr.set(pos, 'X');
+        }
         else fieldRepr.set(pos, dir);
     }
 

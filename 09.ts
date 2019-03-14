@@ -1,18 +1,19 @@
-#!/usr/bin/env node --experimental-modules
+#!/usr/bin/env deno
 
-import { read, pipe, range, map, max, pad } from './util';
+import { pipe, range, map, max } from './deps.ts';
+import { read, pad } from './util/index.ts';
 
 (async () => {
-    const input = await read(process.stdin);
+    const input = await read(Deno.stdin);
 
     const RE = /(\d+) players; last marble is worth (\d+) points/;
 
     const [numPlayers, lastRound] = RE.exec(input).slice(1).map(Number);
 
     // Solution too slow for large inputs :/
-    function solve(numPlayers, lastRound) {
+    function solve(numPlayers: number, lastRound: number) {
         const circle = [0];
-        const scores = new Map(pipe(range(0, numPlayers), map(x => [x, 0])));
+        const scores = new Map(pipe(range(0, numPlayers), map(x => [x, 0] as [number, number])));
         let c = 0;
         let p = 0;
 
@@ -33,14 +34,14 @@ import { read, pipe, range, map, max, pad } from './util';
                 circle.splice(c, 0, turn);
             }
 
-            if (process.env.DEBUG) {
-                const pad4 = pad(4, ' ');
-                console.log(
-                    `[${p + 1}]`, circle
-                        .map((x, i) => c === i ? `(${x})` : `${x} `)
-                        .map(x => pad4(x)).join('')
-                );
-            }
+            // if (process.env.DEBUG) {
+            //     const pad4 = pad(4, ' ');
+            //     console.log(
+            //         `[${p + 1}]`, circle
+            //             .map((x, i) => c === i ? `(${x})` : `${x} `)
+            //             .map(x => pad4(x)).join('')
+            //     );
+            // }
 
             p = (p + 1) % numPlayers;
         }

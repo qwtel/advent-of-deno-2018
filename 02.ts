@@ -1,9 +1,10 @@
-#!/usr/bin/env node --experimental-modules
+#!/usr/bin/env deno
 
-import { read, pipe, some, sum, map, filter, reduce, frequencies, zip, combinations, find, unzip2 } from './util';
+import { pipe, some, sum, map, filter, reduce, find, zip2, combinations2, unzip2 } from './deps.ts';
+import { read, frequencies } from './util/index.ts';
 
 (async () => {
-    const input = await read(process.stdin);
+    const input = await read(Deno.stdin);
 
     const ids = input.trim().split('\n');
 
@@ -14,7 +15,7 @@ import { read, pipe, some, sum, map, filter, reduce, frequencies, zip, combinati
         map(fqs => [
             pipe(fqs.values(), some(x => x === 2)),
             pipe(fqs.values(), some(x => x === 3)),
-        ]),
+        ] as [boolean, boolean]),
         unzip2(),
         map(xs => pipe(xs, map(x => x ? 1 : 0), sum())),
         reduce((a, b) => a * b, 1),
@@ -26,9 +27,9 @@ import { read, pipe, some, sum, map, filter, reduce, frequencies, zip, combinati
     const maxlen = ids[0].length;
 
     const id = pipe(
-        combinations(ids, ids),
+        combinations2(ids),
         map(([id1, id2]) => pipe(
-            zip(id1, id2),
+            zip2(id1, id2),
             filter(([c1, c2]) => c1 === c2),
             map(([c]) => c),
         )),
