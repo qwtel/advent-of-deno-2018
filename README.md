@@ -53,4 +53,4 @@ Obviously the first implementation requires a variety of helper functions such a
 
 ### Further Reading
 
-* [Solving Advent of Code Puzzeles with ES Generators](https://qwtel.com/posts/software/solving-advent-of-code-puzzeles-with-es-generators/)
+* [Solving Advent of Code Puzzeles with ES Generators](https://qwtel.com/posts/software/solving-advent-of-code-puzzles-with-es-generators/)
